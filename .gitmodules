@@ -1,0 +1,4 @@
+[submodule "IGI/LR2/geometric_lib"]
+	path = IGI/LR2/geometric_lib
+	url = https://github.com/smartiqaorg/geometric_lib
+	branch = main

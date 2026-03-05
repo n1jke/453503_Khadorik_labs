@@ -1,0 +1,1 @@
+Error response from daemon: only one instance of "host" network is allowed

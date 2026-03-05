@@ -1,0 +1,10 @@
+.git
+.gitmodules
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+img/
+*.md
+*.txt
+geometric_lib/.git

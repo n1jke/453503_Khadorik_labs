@@ -2,6 +2,7 @@
 Decorators for function enhancement.
 Lab: 3, Variant: 26
 Developer: Matvey Khadorik
+Date: 2026-03-20
 Version: 1.0
 """
 

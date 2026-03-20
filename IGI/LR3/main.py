@@ -3,6 +3,7 @@ Main entry point for Lab 3.
 Combines all modules, handles exceptions, provides repeat capability.
 Lab: 3, Variant: 26
 Developer: Matvey Khadorik
+Date: 2026-03-20
 Version: 1.0
 """
 

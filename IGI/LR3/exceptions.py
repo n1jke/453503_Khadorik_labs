@@ -2,6 +2,7 @@
 Custom exceptions for Lr-3.
 Lr-3, var: 26
 Developer: Matvey Khadorik
+Date: 2026-03-20
 Version: 1.0
 """
 

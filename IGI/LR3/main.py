@@ -7,26 +7,24 @@ Version: 1.0
 """
 
 from core import task_1, task_2, task_3, task_4, task_5
+from decorators import timer_decorator, log_calls
+from exceptions import (
+    InvalidDomainError, ConvergenceError, EmptySequenceError
+)
+from generators import init_with_generator
 from io_utils import (
     get_float, get_int, get_string, get_list_interactive,
     get_even_numbers_loop, print_task1_result, print_task2_result,
     print_task4_result, ask_repeat, ask_choice
-)
-from generators import init_with_generator
-from decorators import timer_decorator, log_calls
-from exceptions import (
-    InvalidDomainError, ConvergenceError, EmptySequenceError,
-    InputValidationError, LabException
 )
 
 
 def run_task_1():
     """Run Task 1 with exception handling."""
     try:
-        x = get_float("Enter x (|x| > 1): ", min_val=1.0001)
-        eps = get_float("Enter precision eps (e.g., 0.0001): ", min_val=1e-15, max_val=1.0)
+        x = get_float("Enter x (|x| > 1): ", min_val=1.000001)
+        eps = get_float("Enter eps (e.g., 0.0001): ", min_val=1e-15, max_val=1.0)
 
-        # Используем декоратор через обертку
         @timer_decorator
         def calculate():
             return task_1(x, eps)
@@ -61,7 +59,6 @@ def run_task_3():
 
 def run_task_4():
     """Run Task 4."""
-    # Спросим, использовать ли текст по умолчанию
     use_default = ask_choice("Use default Alice text? (y/n): ", ['y', 'n']) == 'y'
 
     text = None if use_default else get_string("Enter your text: ")
@@ -86,7 +83,6 @@ def run_task_5():
         else:
             lst = get_list_interactive()
 
-        # Применяем декоратор логирования
         @log_calls
         def process():
             return task_5(lst)
@@ -137,7 +133,6 @@ def main():
         print(f"Running: {task_name}")
         print(f"{'=' * 40}")
 
-        # Запускаем задачу с возможностью повтора
         while True:
             try:
                 task_func()

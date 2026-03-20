@@ -6,10 +6,11 @@ Version: 1.0
 """
 
 from typing import List, Optional
-from exceptions import InputValidationError, EmptySequenceError
+
+from exceptions import EmptySequenceError
 
 
-def get_float(prompt: str, min_val: Optional[float] = None, max_val: Optional[float] = None) -> float:
+def get_float(prompt: str, min_val: Optional[float] = None, max_val: Optional[float] = None) -> float | None:
     """
     Get validated float input with protection against invalid data.
 
@@ -24,27 +25,34 @@ def get_float(prompt: str, min_val: Optional[float] = None, max_val: Optional[fl
     while True:
         try:
             value = input(prompt).strip()
-            if not value:
-                print("[Error] Empty input. Please enter a number.")
-                continue
-
             num = float(value)
 
             if min_val is not None and num < min_val:
-                print(f"[Error] Value must be >= {min_val}")
+                print(f"Value must be >= {min_val}")
                 continue
             if max_val is not None and num > max_val:
-                print(f"[Error] Value must be <= {max_val}")
+                print(f"Value must be <= {max_val}")
                 continue
 
             return num
 
         except ValueError:
-            print("[Error] Invalid number format. Use dot as decimal separator (e.g., 3.14)")
+            print("Invalid number format. Use dot as decimal separator (e.g., 3.14)")
 
 
-def get_int(prompt: str, min_val: Optional[int] = None, max_val: Optional[int] = None) -> int:
-    """Get validated integer input."""
+def get_int(prompt: str, min_val: Optional[int] = None, max_val: Optional[int] = None) -> int | None:
+    """
+     Get validated int input with protection against invalid data.
+
+     Args:
+         prompt: Display prompt
+         min_val: Minimum allowed value
+         max_val: Maximum allowed value
+
+     Returns:
+         Validated int value
+     """
+
     while True:
         try:
             value = input(prompt).strip()
@@ -63,7 +71,17 @@ def get_int(prompt: str, min_val: Optional[int] = None, max_val: Optional[int] =
 
 
 def get_string(prompt: str, allow_empty: bool = False) -> str:
-    """Get string input."""
+    """
+       Get validated string input with protection against invalid data.
+
+       Args:
+           prompt: Display prompt
+           allow_empty: Allow empty string
+
+       Returns:
+           Validated string value
+       """
+
     while True:
         value = input(prompt).strip()
         if not value and not allow_empty:
@@ -77,6 +95,7 @@ def get_list_interactive() -> List[float]:
     Interactive list input.
     User enters size first, then elements one by one.
     """
+
     size = get_int("Enter list size: ", min_val=1)
     result = []
     print(f"Enter {size} numbers:")
@@ -91,6 +110,7 @@ def get_even_numbers_loop() -> List[int]:
     Task 2 specific: Read integers until 1 is entered.
     Returns list of all entered numbers (except the terminating 1).
     """
+
     numbers = []
     print("Enter integers (enter 1 to stop):")
 
@@ -144,7 +164,7 @@ def print_task4_result(count: int, max_len: int, index: int, odd_words: str):
 def ask_repeat() -> bool:
     """
     Ask user if they want to repeat the task.
-    Requirement 11: repeat without exit.
+    Requirement 11
     """
     choice = input("\nRepeat this task? (y/n): ").strip().lower()
     return choice == 'y'
@@ -156,4 +176,4 @@ def ask_choice(prompt: str, valid_choices: List[str]) -> str:
         choice = input(prompt).strip().lower()
         if choice in valid_choices:
             return choice
-        print(f"[Error] Invalid choice. Valid options: {valid_choices}")
+        print(f"Invalid choice. Valid options: {valid_choices}")

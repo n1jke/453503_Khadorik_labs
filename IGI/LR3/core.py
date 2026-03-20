@@ -37,6 +37,7 @@ def task_1(x : float, eps: float) -> tuple[int, float, float]:
 
     while math.fabs(series - target) > eps:
         series += 2 * (1 / ((2*x + 1) * math.pow(x, 2*x + 1)))
+        print(series)
         n += 1
         if n > MAX_ITERATIONS_SERIES:
             raise ConvergenceError(f"Series did not converge in {MAX_ITERATIONS_SERIES} iterations")
@@ -68,7 +69,6 @@ def task_2(array : list[int]) -> float:
     else:
         return even_sum / even_count
 
-# implement input
 def task_3(string : str) -> int:
     """
      Task 3: Count words starting with lowercase letter.
@@ -126,7 +126,7 @@ def task_4(string : str = None) -> tuple[int,int, int, str]:
     new_string = ""
     for word in words:
         if word[0] != "a":
-            new_string += word
+            new_string += " " + word
 
 
     return count_words,longest_length,longest_index, new_string

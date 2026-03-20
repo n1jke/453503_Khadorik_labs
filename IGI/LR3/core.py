@@ -6,12 +6,13 @@ Version: 1.0
 """
 
 import math
+import string as strlib
 
 from exceptions import InvalidDomainError, ConvergenceError, EmptySequenceError
 
 MAX_ITERATIONS_SERIES = 500
 
-def task_1(x : float, eps: float) -> tuple[int, float, float]:
+def task_1(x: float, eps: float) -> tuple[int, float, float]:
     """
     Calculate ln((x+1)/(x-1)) using series expansion.
     Series: 2 * sum(1/((2n+1)*x^(2n+1))) for n=0...inf.
@@ -28,48 +29,41 @@ def task_1(x : float, eps: float) -> tuple[int, float, float]:
         ConvergenceError: If series doesn't converge in MAX_ITERATIONS
     """
 
-    if math.fabs(x) < 1:
+    if math.fabs(x) <= 1:
         raise InvalidDomainError(f"Domain error: |x| must be > 1, got {x}")
 
     target = math.log((x + 1) / (x-1))
-    series = 0
-    n = 0
+    series = 0.0
 
-    while math.fabs(series - target) > eps:
-        series += 2 * (1 / ((2*x + 1) * math.pow(x, 2*x + 1)))
-        print(series)
-        n += 1
-        if n > MAX_ITERATIONS_SERIES:
-            raise ConvergenceError(f"Series did not converge in {MAX_ITERATIONS_SERIES} iterations")
+    for n in range(MAX_ITERATIONS_SERIES):
+        term = 2.0 / ((2 * n + 1) * math.pow(x, 2 * n + 1))
+        series += term
+        if math.fabs(term) < eps:
+            return n + 1, target, series
 
-    return n, target, series
+    raise ConvergenceError(
+        f"Series did not converge in {MAX_ITERATIONS_SERIES} iterations"
+    )
 
 
-def task_2(array : list[int]) -> float:
+def task_2(array: list[int]) -> tuple[float, int, list[int]]:
     """
-    Calculates average of numbers from given list.
+    Calculates average of even numbers from given list.
 
     Returns:
-        tuple: (average, count_of_all_numbers, list_of_even_numbers)
+        tuple: (average, count_of_even_numbers, list_of_even_numbers)
 
     Raises:
         EmptySequenceError: If even numbers not found
     """
 
-    even_sum = 0
-    even_count = 0
-
-    for item in array:
-        if item % 2 == 0:
-            even_sum += item
-            even_count += 1
-
-    if even_count == 0:
+    evens = [item for item in array if item % 2 == 0]
+    if not evens:
         raise EmptySequenceError("No even numbers found in sequence")
-    else:
-        return even_sum / even_count
+    avg = sum(evens) / len(evens)
+    return avg, len(evens), evens
 
-def task_3(string : str) -> int:
+def task_3(string: str) -> int:
     """
      Task 3: Count words starting with lowercase letter.
 
@@ -82,15 +76,14 @@ def task_3(string : str) -> int:
 
     words = string.split()
     n = 0
-
     for word in words:
-        clean = word.strip()
+        clean = word.strip(strlib.punctuation)
         if clean and clean[0].islower():
             n += 1
 
     return n
 
-def task_4(string : str = None) -> tuple[int,int, int, str]:
+def task_4(string: str = None) -> tuple[int, int, int, list[str]]:
     """
     Task 4: Analyze Alice in Wonderland quote.
 
@@ -98,7 +91,7 @@ def task_4(string : str = None) -> tuple[int,int, int, str]:
         string: Optional text to analyze
 
     Returns:
-        tuple: (count_of_all_numbers, max_len, longest_word_index, new_string)
+        tuple: (count_of_all_words, max_len, longest_word_index, odd_words)
     """
 
     if string is None:
@@ -108,30 +101,25 @@ def task_4(string : str = None) -> tuple[int,int, int, str]:
                 "of getting up and picking the daisies, when suddenly a White "
                 "Rabbit with pink eyes ran close by her.")
 
-    words = string.split()
+    words = [word.strip(strlib.punctuation) for word in string.split()]
+    words = [word for word in words if word]
+    if not words:
+        return 0, 0, 0, []
 
     # a) word count
     count_words = len(words)
 
     # b) Longest word and index(0-base)
-    longest_length = -1
-    longest_index = -1
-    for i, word in enumerate(words):
-        if len(words[i]) > longest_length:
-            max_len = len(words[i])
-            index = i
+    longest_word = max(words, key=len)
+    max_len = len(longest_word)
+    index = next(i for i, word in enumerate(words) if word == longest_word) + 1
 
     # c) Odd words: 1st, 3rd, 5th... (indices 0, 2, 4...)
     odd_words = [words[i] for i in range(0, len(words), 2)]
-    new_string = ""
-    for word in words:
-        if word[0] != "a":
-            new_string += " " + word
 
+    return count_words, max_len, index, odd_words
 
-    return count_words,longest_length,longest_index, new_string
-
-def task_5(array : list[int]) -> tuple[int, int]:
+def task_5(array: list[float]) -> tuple[float, float, int, int]:
     """
     Process list of real numbers.
 
@@ -139,7 +127,7 @@ def task_5(array : list[int]) -> tuple[int, int]:
         array: List of float/int numbers
 
     Returns:
-        tuple: (number_sum, number_multiply)
+        tuple: (sum_of_negatives, product_between_min_max, min_index, max_index)
 
     Raises:
         EmptySequenceError: If list is empty
@@ -153,14 +141,12 @@ def task_5(array : list[int]) -> tuple[int, int]:
     min_index = array.index(min_val)
     max_index = array.index(max_val)
 
-    num_sum = 0
-    num_multiply = 1
-    for i in range(min_index, max_index):
-        if array[i] < 0:
-            num_sum += array[i]
-            num_multiply *= array[i]
+    neg_sum = sum(x for x in array if x < 0)
 
+    start = min(min_index, max_index) + 1
+    end = max(min_index, max_index)
+    product = 1.0
+    for value in array[start:end]:
+        product *= value
 
-    return num_sum,num_multiply
-
-
+    return neg_sum, product, min_index, max_index

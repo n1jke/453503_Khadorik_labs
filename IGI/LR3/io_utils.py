@@ -112,7 +112,7 @@ def get_even_numbers_loop() -> List[int]:
     """
 
     numbers = []
-    print("Enter integers (enter 1 to stop):")
+    print("Enter integers (enter 1 to stop). Even numbers will be averaged:")
 
     while True:
         try:
@@ -151,14 +151,15 @@ def print_task2_result(avg: float, count: int, evens: List[int]):
     """Print Task 2 results."""
     print(f"\nEven numbers found: {evens}")
     print(f"Count: {count}")
-    print(f"Average: {avg:.4f}")
+    print(f"Average of even numbers: {avg:.4f}")
 
 
-def print_task4_result(count: int, max_len: int, index: int, odd_words: str):
+def print_task4_result(count: int, max_len: int, index: int, odd_words: List[str]):
     """Print Task 4 results."""
+    odd_preview = " ".join(odd_words)
     print(f"\na) Total words: {count}")
     print(f"b) Longest word length: {max_len}, position: {index}")
-    print(f"c) Odd words (1st, 3rd, 5th...): {odd_words[:100]}...")
+    print(f"c) Odd words (1st, 3rd, 5th...): {odd_preview[:100]}...")
 
 
 def ask_repeat() -> bool:

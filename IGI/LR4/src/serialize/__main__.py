@@ -26,7 +26,7 @@ def main() -> None:
             case "read":
                 current_forest = read()
                 if current_forest is None:
-                    print("Something wrong!")
+                    print("Something wrong happen with file reading")
                 else:
                     forest = current_forest
             case "help":
@@ -35,7 +35,7 @@ def main() -> None:
                     "clear", "write", "read", "help", "quit"
                 ]
                 for c in commands:
-                    print(f"    {c}")
+                    print(f"  {c}")
             case "quit":
                 return
             case _:

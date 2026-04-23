@@ -1,6 +1,6 @@
 """tests for forest package"""
 
-from forest.models import Forest, Tree
+from serialize.models import Forest, Tree
 
 
 def test_add_trees():

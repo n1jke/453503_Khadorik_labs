@@ -1,4 +1,4 @@
-"""Представления: авторизация и разграничение доступа."""
+"""Function-Based Views: страницы, CRUD, авторизация."""
 
 from datetime import date
 
@@ -7,13 +7,36 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
 from django.db import transaction
-from django.shortcuts import redirect, render
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
-from .forms import DealForm, LoginForm, RegistrationForm, ReviewForm
-from .models import Buyer, Deal, Employee, RealEstate, Review, UserProfile
+from .forms import (
+    DealAdminForm,
+    DealForm,
+    DealManageForm,
+    LoginForm,
+    RealEstateForm,
+    RegistrationForm,
+    ReviewForm,
+)
+from .models import (
+    Article,
+    Buyer,
+    CompanyInfo,
+    Deal,
+    Employee,
+    GlossaryTerm,
+    PromoCode,
+    PropertyType,
+    RealEstate,
+    Review,
+    UserProfile,
+    Vacancy,
+)
+from .querysets import filter_properties
 from .roles import (
     ROLE_ADMIN,
-    ROLE_ANONYMOUS,
     ROLE_CLIENT,
     ROLE_EMPLOYEE,
     admin_required,
@@ -25,19 +48,20 @@ from .roles import (
 from .signals import GROUP_CLIENTS
 
 
-def _auth_context(request, form, title):
-    return {
-        'form': form,
-        'title': title,
-        'user_role': get_user_role(request.user),
-    }
+def _page(request, template, extra=None):
+    """Базовый контекст страницы."""
+    ctx = {'user_role': get_user_role(request.user)}
+    if extra:
+        ctx.update(extra)
+    return render(request, template, ctx)
+
+
+# --- Авторизация ---
 
 
 def register_view(request):
-    """Регистрация клиента."""
     if request.user.is_authenticated:
         return redirect('agency:home')
-
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
@@ -47,9 +71,7 @@ def register_view(request):
                     email=form.cleaned_data['email'],
                     password=form.cleaned_data['password'],
                     first_name=form.cleaned_data['full_name'].split()[0],
-                    last_name=' '.join(
-                        form.cleaned_data['full_name'].split()[1:],
-                    ),
+                    last_name=' '.join(form.cleaned_data['full_name'].split()[1:]),
                 )
                 UserProfile.objects.update_or_create(
                     user=user,
@@ -69,19 +91,12 @@ def register_view(request):
             return redirect('agency:home')
     else:
         form = RegistrationForm()
-
-    return render(
-        request,
-        'agency/register.html',
-        _auth_context(request, form, 'Регистрация'),
-    )
+    return _page(request, 'agency/register.html', {'form': form, 'title': 'Регистрация'})
 
 
 def login_view(request):
-    """Авторизация."""
     if request.user.is_authenticated:
         return redirect('agency:home')
-
     if request.method == 'POST':
         form = LoginForm(request, data=request.POST)
         if form.is_valid():
@@ -93,45 +108,225 @@ def login_view(request):
             return redirect('agency:home')
     else:
         form = LoginForm(request)
-
-    return render(
-        request,
-        'agency/login.html',
-        _auth_context(request, form, 'Вход'),
-    )
+    return _page(request, 'agency/login.html', {'form': form, 'title': 'Вход'})
 
 
 @login_required
 def logout_view(request):
-    """Выход из системы."""
     logout(request)
     messages.info(request, 'Вы вышли из системы.')
     return redirect('agency:home')
 
 
+# --- Публичные страницы ---
+
+
 def home_view(request):
-    """Главная (заглушка до этапа 03)."""
-    return render(request, 'agency/home.html', {
-        'user_role': get_user_role(request.user),
+    article = (
+        Article.objects.filter(is_published=True)
+        .order_by('-published_at')
+        .first()
+    )
+    return _page(request, 'agency/home.html', {'latest_article': article})
+
+
+def about_view(request):
+    sections = CompanyInfo.objects.filter(section=CompanyInfo.SECTION_ABOUT)
+    return _page(request, 'agency/about.html', {'sections': sections})
+
+
+def news_list_view(request):
+    articles = Article.objects.filter(is_published=True).order_by('-published_at')
+    return _page(request, 'agency/news_list.html', {'articles': articles})
+
+
+def news_detail_view(request, pk):
+    article = get_object_or_404(Article, pk=pk, is_published=True)
+    return _page(request, 'agency/news_detail.html', {'article': article})
+
+
+def glossary_view(request):
+    terms = GlossaryTerm.objects.all().order_by('term')
+    return _page(request, 'agency/glossary.html', {'terms': terms})
+
+
+def contacts_view(request):
+    info = CompanyInfo.objects.filter(section=CompanyInfo.SECTION_CONTACTS)
+    employees = Employee.objects.select_related('user').all()
+    return _page(request, 'agency/contacts.html', {
+        'info': info,
+        'employees': employees,
     })
+
+
+def privacy_view(request):
+    sections = CompanyInfo.objects.filter(section=CompanyInfo.SECTION_PRIVACY)
+    return _page(request, 'agency/privacy.html', {'sections': sections})
+
+
+def vacancies_view(request):
+    vacancies = Vacancy.objects.filter(is_active=True)
+    return _page(request, 'agency/vacancies.html', {'vacancies': vacancies})
+
+
+def reviews_view(request):
+    reviews = Review.objects.filter(is_published=True).order_by('-created_at')
+    form = None
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            form = ReviewForm(request.POST)
+            if form.is_valid():
+                review = form.save(commit=False)
+                role = get_user_role(request.user)
+                if role == ROLE_CLIENT and hasattr(request.user, 'buyer_profile'):
+                    review.name = request.user.buyer_profile.full_name
+                else:
+                    review.name = (
+                        request.user.get_full_name() or request.user.username
+                    )
+                review.is_published = False
+                review.save()
+                messages.success(request, 'Отзыв отправлен на модерацию.')
+                return redirect('agency:reviews')
+        else:
+            form = ReviewForm()
+    return _page(request, 'agency/reviews.html', {
+        'reviews': reviews,
+        'form': form,
+    })
+
+
+def promocodes_view(request):
+    today = timezone.now().date()
+    active = PromoCode.objects.filter(is_active=True, valid_until__gte=today)
+    archive = PromoCode.objects.filter(
+        Q(is_active=False) | Q(valid_until__lt=today),
+    )
+    return _page(request, 'agency/promocodes.html', {
+        'active_codes': active,
+        'archive_codes': archive,
+    })
+
+
+def statistics_view(request):
+    """Заглушка — полная реализация на этапе 04."""
+    if not request.user.is_superuser:
+        messages.error(request, 'Доступ только для администратора.')
+        return redirect('agency:home')
+    return _page(request, 'agency/statistics.html')
+
+
+# --- Объекты недвижимости ---
+
+
+def property_list_view(request):
+    queryset = RealEstate.objects.select_related(
+        'property_type', 'owner',
+    ).all()
+    queryset, filters = filter_properties(queryset, request.GET)
+    property_types = PropertyType.objects.all()
+    return _page(request, 'agency/property_list.html', {
+        'properties': queryset,
+        'property_types': property_types,
+        'filters': filters,
+        'status_choices': RealEstate.STATUS_CHOICES,
+    })
+
+
+def property_detail_view(request, pk):
+    prop = get_object_or_404(
+        RealEstate.objects.select_related('property_type', 'owner'),
+        pk=pk,
+    )
+    return _page(request, 'agency/property_detail.html', {'property': prop})
+
+
+def property_create_view(request):
+    if not request.user.is_superuser:
+        messages.error(request, 'Недостаточно прав.')
+        return redirect('agency:property_list')
+    if request.method == 'POST':
+        form = RealEstateForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Объект создан.')
+            return redirect('agency:property_list')
+    else:
+        form = RealEstateForm()
+    return _page(request, 'agency/property_form.html', {
+        'form': form,
+        'title': 'Добавить объект',
+    })
+
+
+def property_update_view(request, pk):
+    if not request.user.is_superuser:
+        messages.error(request, 'Недостаточно прав.')
+        return redirect('agency:property_list')
+    prop = get_object_or_404(RealEstate, pk=pk)
+    if request.method == 'POST':
+        form = RealEstateForm(request.POST, request.FILES, instance=prop)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Объект обновлён.')
+            return redirect('agency:property_detail', pk=pk)
+    else:
+        form = RealEstateForm(instance=prop)
+    return _page(request, 'agency/property_form.html', {
+        'form': form,
+        'title': 'Редактировать объект',
+        'property': prop,
+    })
+
+
+def property_delete_view(request, pk):
+    if not request.user.is_superuser:
+        messages.error(request, 'Недостаточно прав.')
+        return redirect('agency:property_list')
+    prop = get_object_or_404(RealEstate, pk=pk)
+    if request.method == 'POST':
+        prop.delete()
+        messages.success(request, 'Объект удалён.')
+        return redirect('agency:property_list')
+    return _page(request, 'agency/property_confirm_delete.html', {'property': prop})
+
+
+# --- Сделки ---
+
+
+def _deals_for_user(user):
+    role = get_user_role(user)
+    if role == ROLE_ADMIN:
+        return Deal.objects.all()
+    if role == ROLE_EMPLOYEE:
+        return Deal.objects.filter(employee=user.employee_profile)
+    if role == ROLE_CLIENT:
+        buyer = get_client_buyer(user)
+        if buyer:
+            return Deal.objects.filter(buyer=buyer)
+    return Deal.objects.none()
+
+
+@login_required
+def deal_list_view(request):
+    deals = _deals_for_user(request.user).select_related(
+        'real_estate', 'employee', 'buyer',
+    ).order_by('-deal_date')
+    return _page(request, 'agency/deal_list.html', {'deals': deals})
 
 
 @client_required
 def my_deals_view(request):
-    """Сделки текущего клиента."""
-    buyer = get_client_buyer(request.user)
-    deals = Deal.objects.filter(buyer=buyer).select_related(
-        'real_estate', 'employee',
-    )
-    return render(request, 'agency/my_deals.html', {
-        'deals': deals,
-        'user_role': ROLE_CLIENT,
-    })
+    return deal_list_view(request)
+
+
+@client_required
+def my_purchases_view(request):
+    return deal_list_view(request)
 
 
 @client_required
 def create_deal_view(request):
-    """Оформление сделки клиентом."""
     buyer = get_client_buyer(request.user)
     if request.method == 'POST':
         form = DealForm(request.POST)
@@ -139,7 +334,7 @@ def create_deal_view(request):
             estate = form.cleaned_data['real_estate']
             employee = Employee.objects.first()
             if not employee:
-                messages.error(request, 'Нет доступных сотрудников для оформления.')
+                messages.error(request, 'Нет доступных сотрудников.')
             else:
                 Deal.objects.create(
                     deal_type=form.cleaned_data['deal_type'],
@@ -156,66 +351,94 @@ def create_deal_view(request):
                 )
                 estate.save(update_fields=['status'])
                 messages.success(request, 'Сделка оформлена.')
-                return redirect('agency:my_deals')
+                return redirect('agency:my_purchases')
     else:
         form = DealForm()
-
-    return render(request, 'agency/create_deal.html', {
+    return _page(request, 'agency/deal_form.html', {
         'form': form,
-        'user_role': ROLE_CLIENT,
+        'title': 'Оформить сделку',
     })
+
+
+def _can_edit_deal(user, deal):
+    role = get_user_role(user)
+    if role == ROLE_ADMIN:
+        return True
+    if role == ROLE_EMPLOYEE:
+        return deal.employee_id == user.employee_profile.id
+    return False
+
+
+@login_required
+def deal_update_view(request, pk):
+    deal = get_object_or_404(Deal, pk=pk)
+    if not _can_edit_deal(request.user, deal):
+        messages.error(request, 'Недостаточно прав.')
+        return redirect('agency:deal_list')
+    employee_only = get_user_role(request.user) == ROLE_EMPLOYEE
+    if request.method == 'POST':
+        form = DealManageForm(
+            request.POST,
+            instance=deal,
+            employee_only=employee_only,
+        )
+        if form.is_valid():
+            updated = form.save(commit=False)
+            if employee_only:
+                updated.employee = request.user.employee_profile
+            updated.save()
+            messages.success(request, 'Сделка обновлена.')
+            return redirect('agency:deal_list')
+    else:
+        form = DealManageForm(instance=deal, employee_only=employee_only)
+    return _page(request, 'agency/deal_form.html', {
+        'form': form,
+        'title': 'Редактировать сделку',
+        'deal': deal,
+    })
+
+
+@admin_required
+def deal_create_admin_view(request):
+    if request.method == 'POST':
+        form = DealAdminForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Сделка создана.')
+            return redirect('agency:deal_list')
+    else:
+        form = DealAdminForm()
+    return _page(request, 'agency/deal_form.html', {
+        'form': form,
+        'title': 'Новая сделка (админ)',
+    })
+
+
+@admin_required
+def deal_delete_view(request, pk):
+    deal = get_object_or_404(Deal, pk=pk)
+    if request.method == 'POST':
+        deal.delete()
+        messages.success(request, 'Сделка удалена.')
+        return redirect('agency:deal_list')
+    return _page(request, 'agency/deal_confirm_delete.html', {'deal': deal})
+
 
 @login_required
 def add_review_view(request):
-    """Добавление отзыва (клиент или сотрудник; не аноним)."""
-    role = get_user_role(request.user)
-    if role == ROLE_ANONYMOUS:
-        return redirect('agency:login')
-
-    if request.method == 'POST':
-        form = ReviewForm(request.POST)
-        if form.is_valid():
-            review = form.save(commit=False)
-            if role == ROLE_CLIENT and hasattr(request.user, 'buyer_profile'):
-                review.name = request.user.buyer_profile.full_name
-            else:
-                review.name = request.user.get_full_name() or request.user.username
-            review.is_published = False
-            review.save()
-            messages.success(request, 'Отзыв отправлен на модерацию.')
-            return redirect('agency:home')
-    else:
-        form = ReviewForm()
-
-    return render(request, 'agency/add_review.html', {
-        'form': form,
-        'user_role': role,
-    })
+    return redirect('agency:reviews')
 
 
 @employee_required
 def employee_dashboard_view(request):
-    """Панель сотрудника: его сделки, объекты, клиенты."""
     employee = request.user.employee_profile
     deals = Deal.objects.filter(employee=employee).select_related(
         'real_estate', 'buyer',
     )
     estate_ids = deals.values_list('real_estate_id', flat=True).distinct()
     buyer_ids = deals.values_list('buyer_id', flat=True).distinct()
-    estates = RealEstate.objects.filter(id__in=estate_ids)
-    buyers = Buyer.objects.filter(id__in=buyer_ids)
-
-    return render(request, 'agency/employee_dashboard.html', {
+    return _page(request, 'agency/employee_dashboard.html', {
         'deals': deals,
-        'estates': estates,
-        'buyers': buyers,
-        'user_role': ROLE_EMPLOYEE,
-    })
-
-
-@admin_required
-def admin_dashboard_view(request):
-    """Заглушка панели администратора (полный CRUD — этап 03)."""
-    return render(request, 'agency/admin_dashboard.html', {
-        'user_role': ROLE_ADMIN,
+        'estates': RealEstate.objects.filter(id__in=estate_ids),
+        'buyers': Buyer.objects.filter(id__in=buyer_ids),
     })

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Агентство недвижимости{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+</head>
+<body>
+    <header>
+        <h1><a href="{% url 'agency:home' %}">Агентство недвижимости</a></h1>
+        <nav>
+            <a href="{% url 'agency:home' %}">Главная</a>
+            <a href="{% url 'agency:about' %}">О компании</a>
+            <a href="{% url 'agency:news_list' %}">Новости</a>
+            <a href="{% url 'agency:property_list' %}">Объекты</a>
+            <a href="{% url 'agency:glossary' %}">Словарь</a>
+            <a href="{% url 'agency:contacts' %}">Контакты</a>
+            <a href="{% url 'agency:vacancies' %}">Вакансии</a>
+            <a href="{% url 'agency:reviews' %}">Отзывы</a>
+            <a href="{% url 'agency:promocodes' %}">Промокоды</a>
+            <a href="{% url 'agency:privacy' %}">Конфиденциальность</a>
+
+            {% if user.is_superuser %}
+                <a href="{% url 'agency:property_create' %}">+ Объект</a>
+                <a href="{% url 'agency:deal_create_admin' %}">+ Сделка</a>
+                <a href="{% url 'admin:index' %}">Django Admin</a>
+                <a href="{% url 'agency:statistics' %}">Статистика</a>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+                <span class="role-badge">{{ user_role }}</span>
+                {% if user_role == 'employee' %}
+                    <a href="{% url 'agency:deal_list' %}">Мои сделки</a>
+                    <a href="{% url 'agency:employee_dashboard' %}">Рабочая панель</a>
+                {% endif %}
+                {% if user_role == 'client' %}
+                    <a href="{% url 'agency:my_purchases' %}">Мои покупки</a>
+                    <a href="{% url 'agency:create_deal' %}">Оформить сделку</a>
+                {% endif %}
+                {% if user_role == 'admin' %}
+                    <a href="{% url 'agency:deal_list' %}">Все сделки</a>
+                {% endif %}
+                <a href="{% url 'agency:logout' %}">Выход ({{ user.username }})</a>
+            {% else %}
+                <a href="{% url 'agency:login' %}">Вход</a>
+                <a href="{% url 'agency:register' %}">Регистрация</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; Агентство недвижимости — вариант 26</p>
+    </footer>
+</body>
+</html>

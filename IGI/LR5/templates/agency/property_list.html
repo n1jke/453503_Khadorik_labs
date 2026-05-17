@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Объекты недвижимости{% endblock %}
+
+{% block content %}
+<h2>Объекты недвижимости</h2>
+
+<form class="filters" method="get" action="{% url 'agency:property_list' %}">
+    <p>
+        <label>Поиск</label>
+        <input type="search" name="q" value="{{ filters.q }}" placeholder="Название, адрес...">
+    </p>
+    <p>
+        <label>Цена от</label>
+        <input type="number" name="price_min" value="{{ filters.price_min }}" min="0" step="1">
+        <label>до</label>
+        <input type="number" name="price_max" value="{{ filters.price_max }}" min="0" step="1">
+    </p>
+    <p>
+        <label>Тип</label>
+        <select name="type">
+            <option value="">— все —</option>
+            {% for pt in property_types %}
+            <option value="{{ pt.pk }}" {% if filters.type == pt.pk|stringformat:"s" %}selected{% endif %}>{{ pt.name }}</option>
+            {% endfor %}
+        </select>
+        <label>Статус</label>
+        <select name="status">
+            <option value="">— все —</option>
+            {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <label>Комнат</label>
+        <input type="number" name="rooms" value="{{ filters.rooms }}" min="1">
+    </p>
+    <p>
+        <label>Сортировка</label>
+        <select name="sort">
+            <option value="date" {% if filters.sort == 'date' %}selected{% endif %}>По дате (новые)</option>
+            <option value="date_asc" {% if filters.sort == 'date_asc' %}selected{% endif %}>По дате (старые)</option>
+            <option value="price_asc" {% if filters.sort == 'price_asc' %}selected{% endif %}>Цена ↑</option>
+            <option value="price_desc" {% if filters.sort == 'price_desc' %}selected{% endif %}>Цена ↓</option>
+            <option value="area" {% if filters.sort == 'area' %}selected{% endif %}>Площадь ↑</option>
+            <option value="area_desc" {% if filters.sort == 'area_desc' %}selected{% endif %}>Площадь ↓</option>
+        </select>
+        <button type="submit" class="btn">Применить</button>
+        <a href="{% url 'agency:property_list' %}">Сбросить</a>
+    </p>
+</form>
+
+{% if user.is_superuser %}
+<p><a class="btn" href="{% url 'agency:property_create' %}">Добавить объект</a></p>
+{% endif %}
+
+<div class="grid-2">
+{% for prop in properties %}
+<article class="card">
+    {% if prop.photo %}
+    <a href="{% url 'agency:property_detail' prop.pk %}">
+        <img src="{{ prop.photo.url }}" alt="{{ prop.title }}" width="100%">
+    </a>
+    {% endif %}
+    <h3><a href="{% url 'agency:property_detail' prop.pk %}">{{ prop.title }}</a></h3>
+    <p><code>{{ prop.code }}</code> — {{ prop.get_status_display }}</p>
+    <p>{{ prop.address }}</p>
+    <p>{{ prop.property_type.name }} · {{ prop.area }} м² · {{ prop.rooms }} комн.</p>
+    <p><strong>{{ prop.price }} BYN</strong></p>
+    {% if user.is_superuser %}
+    <p>
+        <a href="{% url 'agency:property_update' prop.pk %}">Изменить</a> |
+        <a href="{% url 'agency:property_delete' prop.pk %}">Удалить</a>
+    </p>
+    {% endif %}
+</article>
+{% empty %}
+<p>Объекты не найдены.</p>
+{% endfor %}
+</div>
+{% endblock %}

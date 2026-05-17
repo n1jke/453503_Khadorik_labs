@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Новости{% endblock %}
+
+{% block content %}
+<h2>Новости</h2>
+<div class="grid-2">
+{% for article in articles %}
+<article class="card">
+    {% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.title }}" width="100%">
+    {% endif %}
+    <h3>{{ article.title }}</h3>
+    <p>{{ article.short_content }}</p>
+    <p><small>{{ article.published_at|date:"d/m/Y" }}</small></p>
+    <a class="btn" href="{% url 'agency:news_detail' article.pk %}">Читать далее</a>
+</article>
+{% empty %}
+<p>Нет опубликованных статей.</p>
+{% endfor %}
+</div>
+{% endblock %}

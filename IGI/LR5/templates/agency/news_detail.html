@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ article.title }}{% endblock %}
+
+{% block content %}
+<article class="card">
+    <h2>{{ article.title }}</h2>
+    <p><small>{{ article.published_at|date:"d/m/Y H:i" }}</small></p>
+    {% if article.image %}
+    <p><img src="{{ article.image.url }}" alt="{{ article.title }}"></p>
+    {% endif %}
+    <div>{{ article.content|linebreaks }}</div>
+</article>
+<p><a href="{% url 'agency:news_list' %}">&larr; К списку новостей</a></p>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Удалить сделку{% endblock %}
+
+{% block content %}
+<h2>Удалить сделку?</h2>
+<p>{{ deal }} — {{ deal.buyer }} — {{ deal.amount }} BYN</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Удалить</button>
+    <a href="{% url 'agency:deal_list' %}">Отмена</a>
+</form>
+{% endblock %}

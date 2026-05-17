@@ -193,3 +193,80 @@ class DealForm(forms.ModelForm):
         if estate.status != RealEstate.STATUS_AVAILABLE:
             raise ValidationError('Объект недоступен для сделки.')
         return estate
+
+
+class RealEstateForm(forms.ModelForm):
+    """CRUD объекта недвижимости (админ)."""
+
+    class Meta:
+        model = RealEstate
+        fields = (
+            'code', 'title', 'address', 'area', 'price', 'rooms', 'floor',
+            'description', 'photo', 'property_type', 'additional_types',
+            'owner', 'status',
+        )
+        widgets = {
+            'code': forms.TextInput(attrs=_html_attrs(required='required')),
+            'title': forms.TextInput(attrs=_html_attrs(required='required')),
+            'address': forms.TextInput(attrs=_html_attrs(required='required')),
+            'area': forms.NumberInput(attrs=_html_attrs(required='required', min='0.01', step='0.01')),
+            'price': forms.NumberInput(attrs=_html_attrs(required='required', min='0.01', step='0.01')),
+            'rooms': forms.NumberInput(attrs=_html_attrs(required='required', min='1')),
+            'floor': forms.NumberInput(attrs=_html_attrs(required='required', min='1')),
+            'description': forms.Textarea(attrs=_html_attrs(required='required', rows='5')),
+            'photo': forms.FileInput(attrs=_html_attrs()),
+            'property_type': forms.Select(attrs=_html_attrs(required='required')),
+            'additional_types': forms.CheckboxSelectMultiple(),
+            'owner': forms.Select(attrs=_html_attrs(required='required')),
+            'status': forms.Select(attrs=_html_attrs(required='required')),
+        }
+
+    def clean_code(self):
+        code = self.cleaned_data['code'].strip()
+        validate_non_whitespace(code)
+        return code
+
+    def clean_title(self):
+        title = self.cleaned_data['title'].strip()
+        validate_non_whitespace(title)
+        return title
+
+    def clean_address(self):
+        address = self.cleaned_data['address'].strip()
+        validate_non_whitespace(address)
+        return address
+
+
+class DealManageForm(forms.ModelForm):
+    """Редактирование сделки (сотрудник / админ)."""
+
+    class Meta:
+        model = Deal
+        fields = (
+            'deal_type', 'real_estate', 'employee', 'buyer',
+            'deal_date', 'amount',
+        )
+        widgets = {
+            'deal_type': forms.Select(attrs=_html_attrs(required='required')),
+            'real_estate': forms.Select(attrs=_html_attrs(required='required')),
+            'employee': forms.Select(attrs=_html_attrs(required='required')),
+            'buyer': forms.Select(attrs=_html_attrs(required='required')),
+            'deal_date': forms.DateInput(
+                attrs=_html_attrs(required='required', type='date'),
+                format='%Y-%m-%d',
+            ),
+            'amount': forms.NumberInput(
+                attrs=_html_attrs(required='required', min='0.01', step='0.01'),
+            ),
+        }
+
+    def __init__(self, *args, employee_only=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if employee_only:
+            self.fields.pop('employee', None)
+
+
+class DealAdminForm(DealManageForm):
+    """Полная форма сделки для администратора."""
+
+    pass

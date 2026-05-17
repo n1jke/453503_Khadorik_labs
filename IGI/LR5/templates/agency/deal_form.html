@@ -1,14 +1,11 @@
 {% extends 'base.html' %}
 
-{% block title %}Вход{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<h2>Вход</h2>
+<h2>{{ title }}</h2>
 <form method="post" novalidate>
     {% csrf_token %}
-    {% if form.non_field_errors %}
-    <ul>{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
-    {% endif %}
     {% for field in form %}
     <p>
         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -16,7 +13,7 @@
         {% if field.errors %}<br><span>{{ field.errors.0 }}</span>{% endif %}
     </p>
     {% endfor %}
-    <button type="submit" class="btn">Войти</button>
+    <button type="submit" class="btn">Сохранить</button>
+    <a href="{% url 'agency:deal_list' %}">Отмена</a>
 </form>
-<p>Нет аккаунта? <a href="{% url 'agency:register' %}">Регистрация</a></p>
 {% endblock %}

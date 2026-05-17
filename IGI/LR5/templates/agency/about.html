@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}О компании{% endblock %}
+
+{% block content %}
+<h2>О компании</h2>
+{% for section in sections %}
+<article class="card">
+    <h3>{{ section.title }}</h3>
+    <p>{{ section.content|linebreaks }}</p>
+</article>
+{% empty %}
+<p>Информация скоро появится.</p>
+{% endfor %}
+{% endblock %}

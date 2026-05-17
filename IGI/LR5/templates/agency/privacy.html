@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Политика конфиденциальности{% endblock %}
+
+{% block content %}
+<h2>Политика конфиденциальности</h2>
+{% for section in sections %}
+<div class="card">
+    <h3>{{ section.title }}</h3>
+    <p>{{ section.content|linebreaks }}</p>
+</div>
+{% empty %}
+<p>Раздел в разработке.</p>
+{% endfor %}
+{% endblock %}

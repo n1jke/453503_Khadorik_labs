@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Сделки{% endblock %}
+
+{% block content %}
+<h2>
+    {% if user_role == 'client' %}Мои покупки{% elif user_role == 'employee' %}Мои сделки{% else %}Все сделки{% endif %}
+</h2>
+
+{% if user_role == 'client' %}
+<p><a class="btn" href="{% url 'agency:create_deal' %}">Оформить сделку</a></p>
+{% endif %}
+{% if user.is_superuser %}
+<p><a class="btn" href="{% url 'agency:deal_create_admin' %}">+ Сделка (админ)</a></p>
+{% endif %}
+
+<table>
+    <tr>
+        <th>Тип</th><th>Объект</th><th>Клиент</th><th>Сотрудник</th>
+        <th>Дата</th><th>Сумма</th><th></th>
+    </tr>
+    {% for deal in deals %}
+    <tr>
+        <td>{{ deal.get_deal_type_display }}</td>
+        <td><a href="{% url 'agency:property_detail' deal.real_estate_id %}">{{ deal.real_estate }}</a></td>
+        <td>{{ deal.buyer }}</td>
+        <td>{{ deal.employee }}</td>
+        <td>{{ deal.deal_date|date:"d/m/Y" }}</td>
+        <td>{{ deal.amount }}</td>
+        <td>
+            {% if user.is_superuser or user_role == 'employee' %}
+            <a href="{% url 'agency:deal_update' deal.pk %}">Изменить</a>
+            {% endif %}
+            {% if user.is_superuser %}
+            | <a href="{% url 'agency:deal_delete' deal.pk %}">Удалить</a>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="7">Сделок нет.</td></tr>
+    {% endfor %}
+</table>
+{% endblock %}

@@ -1,27 +1,22 @@
-{% extends 'agency/base_auth.html' %}
+{% extends 'base.html' %}
+
+{% block title %}Главная — Агентство недвижимости{% endblock %}
 
 {% block content %}
 <h2>Главная</h2>
-<p>Текущая роль: <strong>{{ user_role }}</strong></p>
-
-<nav>
-    {% if user.is_authenticated %}
-        {% if user_role == 'client' %}
-            <ul>
-                <li><a href="{% url 'agency:my_deals' %}">Мои сделки</a></li>
-                <li><a href="{% url 'agency:create_deal' %}">Оформить сделку</a></li>
-                <li><a href="{% url 'agency:add_review' %}">Добавить отзыв</a></li>
-            </ul>
-        {% elif user_role == 'employee' %}
-            <p><a href="{% url 'agency:employee_dashboard' %}">Панель сотрудника</a></p>
-            <p><a href="{% url 'agency:add_review' %}">Добавить отзыв</a></p>
-        {% elif user_role == 'admin' %}
-            <p><a href="{% url 'agency:admin_dashboard' %}">Панель администратора</a></p>
-            <p><a href="/admin/">Django Admin</a></p>
-        {% endif %}
-    {% else %}
-        <p>Публичные разделы будут на этапе 03.</p>
-        <p><a href="{% url 'agency:login' %}">Войти</a> для оформления сделок и отзывов.</p>
+{% if latest_article %}
+<section class="card">
+    <h3>Последняя новость</h3>
+    {% if latest_article.image %}
+    <p><img src="{{ latest_article.image.url }}" alt="{{ latest_article.title }}" width="320"></p>
     {% endif %}
-</nav>
+    <h4>{{ latest_article.title }}</h4>
+    <p>{{ latest_article.short_content }}</p>
+    <p><small>Опубликовано: {{ latest_article.published_at|date:"d/m/Y H:i" }}</small></p>
+    <a class="btn" href="{% url 'agency:news_detail' latest_article.pk %}">Читать далее</a>
+</section>
+{% else %}
+<p>Новостей пока нет.</p>
+{% endif %}
+<p><a href="{% url 'agency:property_list' %}">Каталог объектов</a></p>
 {% endblock %}

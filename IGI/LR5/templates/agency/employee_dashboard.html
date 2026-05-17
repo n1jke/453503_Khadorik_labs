@@ -1,28 +1,29 @@
-{% extends 'agency/base_auth.html' %}
+{% extends 'base.html' %}
+
+{% block title %}Панель сотрудника{% endblock %}
 
 {% block content %}
 <h2>Панель сотрудника</h2>
+<p><a href="{% url 'agency:deal_list' %}">Все мои сделки</a></p>
 
-<h3>Мои сделки</h3>
-{% if deals %}
-<table border="1" cellpadding="6">
+<h3>Последние сделки</h3>
+<table>
     <tr><th>Объект</th><th>Клиент</th><th>Тип</th><th>Дата</th><th>Сумма</th></tr>
     {% for deal in deals %}
     <tr>
         <td>{{ deal.real_estate }}</td>
         <td>{{ deal.buyer }}</td>
         <td>{{ deal.get_deal_type_display }}</td>
-        <td>{{ deal.deal_date }}</td>
+        <td>{{ deal.deal_date|date:"d/m/Y" }}</td>
         <td>{{ deal.amount }}</td>
     </tr>
+    {% empty %}
+    <tr><td colspan="5">Нет сделок.</td></tr>
     {% endfor %}
 </table>
-{% else %}
-<p>Нет сделок.</p>
-{% endif %}
 
-<h3>Объекты, с которыми работаю</h3>
-<ul>{% for e in estates %}<li>{{ e }}</li>{% empty %}<li>—</li>{% endfor %}</ul>
+<h3>Объекты</h3>
+<ul>{% for e in estates %}<li><a href="{% url 'agency:property_detail' e.pk %}">{{ e }}</a></li>{% empty %}<li>—</li>{% endfor %}</ul>
 
 <h3>Клиенты</h3>
 <ul>{% for b in buyers %}<li>{{ b.full_name }} — {{ b.phone }}</li>{% empty %}<li>—</li>{% endfor %}</ul>

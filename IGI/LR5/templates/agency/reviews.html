@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Отзывы{% endblock %}
+
+{% block content %}
+<h2>Отзывы</h2>
+
+{% if user.is_authenticated %}
+<section class="card">
+    <h3>Добавить отзыв</h3>
+    {% if form %}
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+        <p>
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<span>{{ field.errors.0 }}</span>{% endif %}
+        </p>
+        {% endfor %}
+        <button type="submit" class="btn">Отправить</button>
+    </form>
+    {% endif %}
+</section>
+{% else %}
+<p><a href="{% url 'agency:login' %}?next={% url 'agency:reviews' %}">Войдите</a> или
+   <a href="{% url 'agency:register' %}">зарегистрируйтесь</a>, чтобы оставить отзыв.</p>
+{% endif %}
+
+{% for review in reviews %}
+<article class="card">
+    <h4>{{ review.name }} — {{ review.rating }}/5</h4>
+    <p>{{ review.text }}</p>
+    <p><small>{{ review.created_at|date:"d/m/Y H:i" }}</small></p>
+</article>
+{% empty %}
+<p>Отзывов пока нет.</p>
+{% endfor %}
+{% endblock %}

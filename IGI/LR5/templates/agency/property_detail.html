@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ property.title }}{% endblock %}
+
+{% block content %}
+<article class="card">
+    <h2>{{ property.title }} <small>({{ property.code }})</small></h2>
+    {% if property.photo %}
+    <p><img src="{{ property.photo.url }}" alt="{{ property.title }}" style="max-width:100%"></p>
+    {% endif %}
+    <table>
+        <tr><th>Адрес</th><td>{{ property.address }}</td></tr>
+        <tr><th>Тип</th><td>{{ property.property_type.name }}</td></tr>
+        <tr><th>Статус</th><td>{{ property.get_status_display }}</td></tr>
+        <tr><th>Площадь</th><td>{{ property.area }} м²</td></tr>
+        <tr><th>Комнаты / этаж</th><td>{{ property.rooms }} / {{ property.floor }}</td></tr>
+        <tr><th>Цена</th><td>{{ property.price }} BYN</td></tr>
+        <tr><th>Владелец</th><td>{{ property.owner.full_name }} ({{ property.owner.phone }})</td></tr>
+    </table>
+    <h3>Описание</h3>
+    <p>{{ property.description|linebreaks }}</p>
+    {% if property.additional_types.exists %}
+    <p><strong>Доп. типы:</strong>
+        {% for t in property.additional_types.all %}{{ t.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+    </p>
+    {% endif %}
+</article>
+
+{% if user_role == 'client' and property.status == 'available' %}
+<p><a class="btn" href="{% url 'agency:create_deal' %}">Оформить сделку</a></p>
+{% endif %}
+
+{% if user.is_superuser %}
+<p>
+    <a class="btn" href="{% url 'agency:property_update' property.pk %}">Редактировать</a>
+    <a class="btn btn-danger" href="{% url 'agency:property_delete' property.pk %}">Удалить</a>
+</p>
+{% endif %}
+<p><a href="{% url 'agency:property_list' %}">&larr; К каталогу</a></p>
+{% endblock %}

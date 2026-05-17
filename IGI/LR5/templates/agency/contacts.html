@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Контакты{% endblock %}
+
+{% block content %}
+<h2>Контакты</h2>
+{% for block in info %}
+<div class="card">
+    <h3>{{ block.title }}</h3>
+    <p>{{ block.content|linebreaks }}</p>
+</div>
+{% endfor %}
+
+<h3>Сотрудники</h3>
+<div class="grid-2">
+{% for emp in employees %}
+<article class="card">
+    {% if emp.photo %}
+    <img src="{{ emp.photo.url }}" alt="{{ emp }}" width="120">
+    {% endif %}
+    <h4>{{ emp.user.get_full_name|default:emp.user.username }}</h4>
+    <p><strong>{{ emp.position }}</strong>, {{ emp.department }}</p>
+    <p>Тел.: {{ emp.phone }}</p>
+    <p>Email: <a href="mailto:{{ emp.user.email }}">{{ emp.user.email }}</a></p>
+</article>
+{% endfor %}
+</div>
+{% endblock %}

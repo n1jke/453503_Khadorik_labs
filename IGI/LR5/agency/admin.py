@@ -15,8 +15,16 @@ from .models import (
     PropertyType,
     RealEstate,
     Review,
+    UserProfile,
     Vacancy,
 )
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'role')
+    list_filter = ('role',)
+    search_fields = ('user__username', 'user__email')
 
 
 class RealEstateInline(admin.TabularInline):
@@ -152,9 +160,10 @@ class EmployeeAdmin(admin.ModelAdmin):
 
 @admin.register(Buyer)
 class BuyerAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'phone', 'email', 'birth_date', 'created_at')
-    search_fields = ('full_name', 'phone', 'email')
+    list_display = ('full_name', 'user', 'phone', 'email', 'birth_date', 'created_at')
+    search_fields = ('full_name', 'phone', 'email', 'user__username')
     list_filter = ('created_at',)
+    autocomplete_fields = ('user',)
 
 
 @admin.register(Deal)

@@ -1,35 +1,29 @@
 """Модели приложения agency — агентство недвижимости."""
 
-from datetime import date
-
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-PHONE_VALIDATOR = RegexValidator(
-    regex=r'^\+375 \(29\) \d{3}-\d{2}-\d{2}$',
-    message='Телефон должен быть в формате +375 (29) XXX-XX-XX.',
+from .validators import (
+    PHONE_VALIDATOR,
+    validate_age_18_plus,
+    validate_non_whitespace,
+    validate_positive_decimal,
 )
-
-
-def validate_age_18_plus(value):
-    """Проверка возраста не менее 18 лет по дате рождения."""
-    today = date.today()
-    age = (
-        today.year
-        - value.year
-        - ((today.month, today.day) < (value.month, value.day))
-    )
-    if age < 18:
-        raise ValidationError('Возраст должен быть не менее 18 лет.')
 
 
 class PropertyType(models.Model):
     """Вид недвижимости."""
 
-    name = models.CharField('Название типа', max_length=100)
-    description = models.TextField('Описание типа')
+    name = models.CharField(
+        'Название типа',
+        max_length=100,
+        validators=[validate_non_whitespace],
+    )
+    description = models.TextField(
+        'Описание типа',
+        validators=[validate_non_whitespace],
+    )
 
     class Meta:
         verbose_name = 'Вид недвижимости'
@@ -43,7 +37,11 @@ class PropertyType(models.Model):
 class Owner(models.Model):
     """Владелец объекта недвижимости."""
 
-    full_name = models.CharField('ФИО', max_length=200)
+    full_name = models.CharField(
+        'ФИО',
+        max_length=200,
+        validators=[validate_non_whitespace],
+    )
     phone = models.CharField(
         'Телефон',
         max_length=20,
@@ -73,11 +71,34 @@ class RealEstate(models.Model):
         (STATUS_RENTED, 'Сдан в аренду'),
     ]
 
-    code = models.CharField('Код объекта', max_length=50, unique=True)
-    title = models.CharField('Заголовок', max_length=200)
-    address = models.CharField('Адрес', max_length=300)
-    area = models.DecimalField('Площадь, м²', max_digits=10, decimal_places=2)
-    price = models.DecimalField('Стоимость', max_digits=14, decimal_places=2)
+    code = models.CharField(
+        'Код объекта',
+        max_length=50,
+        unique=True,
+        validators=[validate_non_whitespace],
+    )
+    title = models.CharField(
+        'Заголовок',
+        max_length=200,
+        validators=[validate_non_whitespace],
+    )
+    address = models.CharField(
+        'Адрес',
+        max_length=300,
+        validators=[validate_non_whitespace],
+    )
+    area = models.DecimalField(
+        'Площадь, м²',
+        max_digits=10,
+        decimal_places=2,
+        validators=[validate_positive_decimal],
+    )
+    price = models.DecimalField(
+        'Стоимость',
+        max_digits=14,
+        decimal_places=2,
+        validators=[validate_positive_decimal],
+    )
     rooms = models.PositiveIntegerField('Количество комнат')
     floor = models.PositiveIntegerField('Этаж')
     description = models.TextField('Описание')
@@ -157,7 +178,19 @@ class Employee(models.Model):
 class Buyer(models.Model):
     """Покупатель или арендатор."""
 
-    full_name = models.CharField('ФИО', max_length=200)
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='buyer_profile',
+        null=True,
+        blank=True,
+        verbose_name='Пользователь',
+    )
+    full_name = models.CharField(
+        'ФИО',
+        max_length=200,
+        validators=[validate_non_whitespace],
+    )
     phone = models.CharField(
         'Телефон',
         max_length=20,
@@ -213,13 +246,23 @@ class Deal(models.Model):
         verbose_name='Покупатель',
     )
     deal_date = models.DateField('Дата сделки')
-    amount = models.DecimalField('Сумма', max_digits=14, decimal_places=2)
+    amount = models.DecimalField(
+        'Сумма',
+        max_digits=14,
+        decimal_places=2,
+        validators=[validate_positive_decimal],
+    )
     created_at = models.DateTimeField('Создана', auto_now_add=True)
 
     class Meta:
         verbose_name = 'Сделка'
         verbose_name_plural = 'Сделки'
         ordering = ['-deal_date']
+        permissions = [
+            ('view_own_deal', 'Просмотр своих сделок'),
+            ('add_own_deal', 'Оформление своих сделок'),
+            ('change_own_deal', 'Изменение своих сделок'),
+        ]
 
     def __str__(self):
         return f'{self.get_deal_type_display()} — {self.real_estate.code}'
@@ -350,3 +393,34 @@ class PromoCode(models.Model):
 
     def __str__(self):
         return self.code
+
+
+class UserProfile(models.Model):
+    """Профиль пользователя с ролью client / employee."""
+
+    ROLE_CLIENT = 'client'
+    ROLE_EMPLOYEE = 'employee'
+    ROLE_CHOICES = [
+        (ROLE_CLIENT, 'Клиент'),
+        (ROLE_EMPLOYEE, 'Сотрудник'),
+    ]
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profile',
+        verbose_name='Пользователь',
+    )
+    role = models.CharField(
+        'Роль',
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default=ROLE_CLIENT,
+    )
+
+    class Meta:
+        verbose_name = 'Профиль пользователя'
+        verbose_name_plural = 'Профили пользователей'
+
+    def __str__(self):
+        return f'{self.user.username} ({self.get_role_display()})'

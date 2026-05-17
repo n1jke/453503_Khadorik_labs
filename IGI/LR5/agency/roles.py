@@ -1,0 +1,93 @@
+"""Роли пользователей и декораторы доступа."""
+
+from functools import wraps
+
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import PermissionDenied
+from django.shortcuts import redirect
+
+ROLE_ANONYMOUS = 'anonymous'
+ROLE_CLIENT = 'client'
+ROLE_EMPLOYEE = 'employee'
+ROLE_ADMIN = 'admin'
+
+
+def get_user_role(user):
+    """
+    Определить роль: anonymous, client, employee, admin.
+    Superuser — admin; наличие Employee — employee; иначе client.
+    """
+    if user is None or not user.is_authenticated:
+        return ROLE_ANONYMOUS
+    if user.is_superuser:
+        return ROLE_ADMIN
+    if hasattr(user, 'employee_profile'):
+        return ROLE_EMPLOYEE
+    profile = getattr(user, 'profile', None)
+    if profile and profile.role == 'employee':
+        return ROLE_EMPLOYEE
+    return ROLE_CLIENT
+
+
+def get_client_buyer(user):
+    """Профиль покупателя, связанный с пользователем-клиентом."""
+    if get_user_role(user) != ROLE_CLIENT:
+        return None
+    return getattr(user, 'buyer_profile', None)
+
+
+def _role_test(*allowed_roles):
+    def check(user):
+        return get_user_role(user) in allowed_roles
+
+    return check
+
+
+def role_required(*allowed_roles):
+    """Декоратор: доступ только для указанных ролей."""
+    def decorator(view_func):
+        @login_required
+        @user_passes_test(
+            _role_test(*allowed_roles),
+            login_url='agency:login',
+        )
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            return view_func(request, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def client_required(view_func):
+    """Только зарегистрированный клиент."""
+    return role_required(ROLE_CLIENT)(view_func)
+
+
+def employee_required(view_func):
+    """Только сотрудник."""
+    return role_required(ROLE_EMPLOYEE)(view_func)
+
+
+def admin_required(view_func):
+    """Только суперпользователь."""
+    return role_required(ROLE_ADMIN)(view_func)
+
+
+def staff_or_admin_required(view_func):
+    """Сотрудник или администратор."""
+    return role_required(ROLE_EMPLOYEE, ROLE_ADMIN)(view_func)
+
+
+def login_required_api(view_func):
+    """
+    Для API-представлений (этап 04): только авторизованные пользователи.
+    """
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            raise PermissionDenied('Требуется авторизация.')
+        return view_func(request, *args, **kwargs)
+
+    return wrapper

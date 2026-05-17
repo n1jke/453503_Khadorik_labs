@@ -1,0 +1,29 @@
+{% extends 'agency/base_auth.html' %}
+
+{% block content %}
+<h2>Панель сотрудника</h2>
+
+<h3>Мои сделки</h3>
+{% if deals %}
+<table border="1" cellpadding="6">
+    <tr><th>Объект</th><th>Клиент</th><th>Тип</th><th>Дата</th><th>Сумма</th></tr>
+    {% for deal in deals %}
+    <tr>
+        <td>{{ deal.real_estate }}</td>
+        <td>{{ deal.buyer }}</td>
+        <td>{{ deal.get_deal_type_display }}</td>
+        <td>{{ deal.deal_date }}</td>
+        <td>{{ deal.amount }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>Нет сделок.</p>
+{% endif %}
+
+<h3>Объекты, с которыми работаю</h3>
+<ul>{% for e in estates %}<li>{{ e }}</li>{% empty %}<li>—</li>{% endfor %}</ul>
+
+<h3>Клиенты</h3>
+<ul>{% for b in buyers %}<li>{{ b.full_name }} — {{ b.phone }}</li>{% empty %}<li>—</li>{% endfor %}</ul>
+{% endblock %}

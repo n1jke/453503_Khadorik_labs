@@ -1,0 +1,27 @@
+{% extends 'agency/base_auth.html' %}
+
+{% block content %}
+<h2>Главная</h2>
+<p>Текущая роль: <strong>{{ user_role }}</strong></p>
+
+<nav>
+    {% if user.is_authenticated %}
+        {% if user_role == 'client' %}
+            <ul>
+                <li><a href="{% url 'agency:my_deals' %}">Мои сделки</a></li>
+                <li><a href="{% url 'agency:create_deal' %}">Оформить сделку</a></li>
+                <li><a href="{% url 'agency:add_review' %}">Добавить отзыв</a></li>
+            </ul>
+        {% elif user_role == 'employee' %}
+            <p><a href="{% url 'agency:employee_dashboard' %}">Панель сотрудника</a></p>
+            <p><a href="{% url 'agency:add_review' %}">Добавить отзыв</a></p>
+        {% elif user_role == 'admin' %}
+            <p><a href="{% url 'agency:admin_dashboard' %}">Панель администратора</a></p>
+            <p><a href="/admin/">Django Admin</a></p>
+        {% endif %}
+    {% else %}
+        <p>Публичные разделы будут на этапе 03.</p>
+        <p><a href="{% url 'agency:login' %}">Войти</a> для оформления сделок и отзывов.</p>
+    {% endif %}
+</nav>
+{% endblock %}

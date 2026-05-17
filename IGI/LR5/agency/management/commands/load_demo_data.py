@@ -22,6 +22,7 @@ from agency.models import (
     PropertyType,
     RealEstate,
     Review,
+    UserProfile,
     Vacancy,
 )
 
@@ -81,12 +82,16 @@ class Command(BaseCommand):
         self._create_reviews()
         self._create_promo_codes()
 
+        from django.core.management import call_command
+        call_command('sync_profiles')
+
         self.stdout.write(self.style.SUCCESS('Демо-данные успешно загружены.'))
 
     def _flush_data(self):
         models_order = [
             Deal, Review, PromoCode, Article, Vacancy, GlossaryTerm,
-            CompanyInfo, RealEstate, Employee, Buyer, Owner, PropertyType,
+            CompanyInfo, RealEstate, Employee, Buyer, UserProfile,
+            Owner, PropertyType,
         ]
         for model in models_order:
             model.objects.all().delete()

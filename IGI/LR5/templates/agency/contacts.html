@@ -4,6 +4,17 @@
 
 {% block content %}
 <h2>Контакты</h2>
+
+{% if weather %}
+<div class="weather-widget">
+    <strong>Погода в {{ weather.city }}:</strong>
+    {{ weather.temperature }}°C, {{ weather.description }}
+    {% if weather.icon %}
+    <img src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="" width="40">
+    {% endif %}
+</div>
+{% endif %}
+
 {% for block in info %}
 <div class="card">
     <h3>{{ block.title }}</h3>

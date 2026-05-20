@@ -4,5 +4,99 @@
 
 {% block content %}
 <h2>Статистика и аналитика</h2>
-<p>Раздел будет реализован на <strong>этапе 04</strong> (matplotlib, внешние API, медиана/мода).</p>
+
+<div class="stats-grid">
+    <div class="stat-box">
+        <strong>{{ stats.deal_stats.count }}</strong>
+        <p>Сделок</p>
+    </div>
+    <div class="stat-box">
+        <strong>{{ stats.total_deals_sum|floatformat:2 }}</strong>
+        <p>Общая сумма (BYN)</p>
+    </div>
+    <div class="stat-box">
+        <strong>{{ stats.deal_stats.mean|floatformat:2 }}</strong>
+        <p>Средняя сумма сделки</p>
+    </div>
+    <div class="stat-box">
+        <strong>{{ stats.deal_stats.median|floatformat:2 }}</strong>
+        <p>Медиана сумм</p>
+    </div>
+    <div class="stat-box">
+        <strong>{{ stats.deal_stats.mode|default:"—" }}</strong>
+        <p>Мода сумм</p>
+    </div>
+    <div class="stat-box">
+        <strong>{{ stats.avg_check|floatformat:2 }}</strong>
+        <p>Средний чек</p>
+    </div>
+</div>
+
+<h3>Возраст клиентов (по дате рождения)</h3>
+<p>Средний: <strong>{{ stats.age_stats.mean|floatformat:1 }}</strong> лет,
+   медиана: <strong>{{ stats.age_stats.median|floatformat:1 }}</strong> лет
+   ({{ stats.age_stats.count }} клиентов)</p>
+
+<h3>Типы недвижимости</h3>
+<p>Популярный (по сделкам):
+    <strong>{{ stats.popular_type|default:"—" }}</strong>
+    {% if stats.popular_type %}({{ stats.popular_type.deal_count }} сделок){% endif %}
+</p>
+<p>Самый прибыльный:
+    <strong>{{ stats.profitable_type|default:"—" }}</strong>
+    {% if stats.profitable_type %}({{ stats.profitable_type.total_amount|floatformat:0 }} BYN){% endif %}
+</p>
+
+<h3>Сделки по типам</h3>
+<table>
+    <tr><th>Тип</th><th>Кол-во</th><th>Сумма</th></tr>
+    {% for row in stats.deals_by_type %}
+    <tr>
+        <td>{% if row.deal_type == 'sale' %}Продажа{% else %}Аренда{% endif %}</td>
+        <td>{{ row.count }}</td>
+        <td>{{ row.total|floatformat:2 }}</td>
+    </tr>
+    {% endfor %}
+</table>
+<p>За месяц: {{ stats.deals_last_month }}, за год: {{ stats.deals_last_year }}</p>
+
+<h3>Сотрудники</h3>
+<table>
+    <tr><th>Сотрудник</th><th>Сделок</th><th>Сумма</th></tr>
+    {% for emp in stats.employees_stats %}
+    <tr>
+        <td>{{ emp }}</td>
+        <td>{{ emp.deal_count }}</td>
+        <td>{{ emp.total_amount|floatformat:2|default:"0" }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h3>Объекты (алфавит)</h3>
+<ul>
+    {% for e in stats.estates_alpha %}
+    <li><a href="{% url 'agency:property_detail' e.pk %}">{{ e.title }}</a></li>
+    {% endfor %}
+</ul>
+
+<h3>Клиенты (алфавит)</h3>
+<ul>
+    {% for b in stats.buyers_alpha %}
+    <li>{{ b.full_name }}</li>
+    {% endfor %}
+</ul>
+
+<h3>Графики (matplotlib)</h3>
+<div class="chart-row">
+    <h4>Сделки по типам</h4>
+    <img src="{{ MEDIA_URL }}{{ charts.deals_by_type }}" alt="Сделки по типам">
+</div>
+<div class="chart-row">
+    <h4>Сделки по месяцам</h4>
+    <img src="{{ MEDIA_URL }}{{ charts.deals_timeline }}" alt="Сделки по месяцам">
+</div>
+<div class="chart-row">
+    <h4>Типы объектов</h4>
+    <img src="{{ MEDIA_URL }}{{ charts.property_types }}" alt="Типы объектов">
+</div>
 {% endblock %}

@@ -8,8 +8,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
 from django.db import transaction
 from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+from .charts import generate_all_charts
+from .services import geocode_address, get_exchange_rates, get_weather
+from .statistics_calc import compute_statistics
+from .timezone_utils import format_datetime_ddmmyyyy, get_user_timezone, is_valid_timezone
 
 from .forms import (
     DealAdminForm,
@@ -44,6 +51,7 @@ from .roles import (
     employee_required,
     get_client_buyer,
     get_user_role,
+    login_required_api,
 )
 from .signals import GROUP_CLIENTS
 
@@ -127,7 +135,11 @@ def home_view(request):
         .order_by('-published_at')
         .first()
     )
-    return _page(request, 'agency/home.html', {'latest_article': article})
+    weather = get_weather()
+    return _page(request, 'agency/home.html', {
+        'latest_article': article,
+        'weather': weather,
+    })
 
 
 def about_view(request):
@@ -153,9 +165,11 @@ def glossary_view(request):
 def contacts_view(request):
     info = CompanyInfo.objects.filter(section=CompanyInfo.SECTION_CONTACTS)
     employees = Employee.objects.select_related('user').all()
+    weather = get_weather()
     return _page(request, 'agency/contacts.html', {
         'info': info,
         'employees': employees,
+        'weather': weather,
     })
 
 
@@ -208,12 +222,45 @@ def promocodes_view(request):
     })
 
 
+@admin_required
 def statistics_view(request):
-    """Заглушка — полная реализация на этапе 04."""
-    if not request.user.is_superuser:
-        messages.error(request, 'Доступ только для администратора.')
-        return redirect('agency:home')
-    return _page(request, 'agency/statistics.html')
+    """Статистика и графики matplotlib (только админ)."""
+    stats = compute_statistics()
+    charts = generate_all_charts()
+    return _page(request, 'agency/statistics.html', {
+        'stats': stats,
+        'charts': charts,
+    })
+
+
+@require_POST
+def set_timezone_view(request):
+    """Сохранить таймзону в сессии и профиле."""
+    tz_name = request.POST.get('timezone', '').strip()
+    if not is_valid_timezone(tz_name):
+        messages.error(request, 'Некорректная таймзона.')
+    else:
+        request.session['user_timezone'] = tz_name
+        if request.user.is_authenticated:
+            profile, _ = UserProfile.objects.get_or_create(user=request.user)
+            profile.timezone = tz_name
+            profile.save(update_fields=['timezone'])
+        messages.success(request, f'Часовой пояс: {tz_name}')
+    return redirect(request.POST.get('next', 'agency:home'))
+
+
+@login_required_api
+def api_weather_view(request):
+    """JSON API погоды — только для авторизованных."""
+    city = request.GET.get('city')
+    data = get_weather(city)
+    return JsonResponse(data)
+
+
+@login_required_api
+def api_exchange_rates_view(request):
+    """JSON API курсов валют — только для авторизованных."""
+    return JsonResponse(get_exchange_rates())
 
 
 # --- Объекты недвижимости ---
@@ -225,11 +272,22 @@ def property_list_view(request):
     ).all()
     queryset, filters = filter_properties(queryset, request.GET)
     property_types = PropertyType.objects.all()
+    rates = get_exchange_rates()
+    user_zone = get_user_timezone(request)
+    properties_with_dates = []
+    for prop in queryset:
+        properties_with_dates.append({
+            'obj': prop,
+            'created_utc': format_datetime_ddmmyyyy(prop.created_at, None),
+            'created_local': format_datetime_ddmmyyyy(prop.created_at, user_zone),
+        })
     return _page(request, 'agency/property_list.html', {
         'properties': queryset,
+        'properties_with_dates': properties_with_dates,
         'property_types': property_types,
         'filters': filters,
         'status_choices': RealEstate.STATUS_CHOICES,
+        'exchange_rates': rates,
     })
 
 
@@ -238,7 +296,26 @@ def property_detail_view(request, pk):
         RealEstate.objects.select_related('property_type', 'owner'),
         pk=pk,
     )
-    return _page(request, 'agency/property_detail.html', {'property': prop})
+    user_zone = get_user_timezone(request)
+    rates = get_exchange_rates()
+    geo = geocode_address(prop.address)
+    price_usd = None
+    price_eur = None
+    if rates.get('USD_per_byn') and prop.price:
+        price_usd = round(float(prop.price) * float(rates['USD_per_byn']), 2)
+    if rates.get('EUR_per_byn') and prop.price:
+        price_eur = round(float(prop.price) * float(rates['EUR_per_byn']), 2)
+    return _page(request, 'agency/property_detail.html', {
+        'property': prop,
+        'created_at_utc': format_datetime_ddmmyyyy(prop.created_at, None),
+        'created_at_local': format_datetime_ddmmyyyy(prop.created_at, user_zone),
+        'updated_at_utc': format_datetime_ddmmyyyy(prop.updated_at, None),
+        'updated_at_local': format_datetime_ddmmyyyy(prop.updated_at, user_zone),
+        'exchange_rates': rates,
+        'price_usd': price_usd,
+        'price_eur': price_eur,
+        'geo': geo,
+    })
 
 
 def property_create_view(request):

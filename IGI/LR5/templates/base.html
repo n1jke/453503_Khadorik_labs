@@ -62,6 +62,26 @@
         {% block content %}{% endblock %}
     </main>
 
+    <aside class="datetime-panel">
+        <p><strong>Сейчас (UTC):</strong> {{ current_date_utc }} {{ current_time_utc }}</p>
+        <p><strong>Сейчас ({{ user_timezone }}):</strong> {{ current_date_local }} {{ current_time_local }}</p>
+        <form method="post" action="{% url 'agency:set_timezone' %}" class="tz-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.path }}">
+            <label>Часовой пояс:</label>
+            <select name="timezone">
+                {% for tz in common_timezones %}
+                <option value="{{ tz }}" {% if tz == user_timezone %}selected{% endif %}>{{ tz }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn">Применить</button>
+        </form>
+        <details>
+            <summary>Календарь ({{ user_timezone }})</summary>
+            <pre class="text-calendar">{{ text_calendar }}</pre>
+        </details>
+    </aside>
+
     <footer>
         <p>&copy; Агентство недвижимости — вариант 26</p>
     </footer>

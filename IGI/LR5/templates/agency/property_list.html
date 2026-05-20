@@ -49,12 +49,22 @@
     </p>
 </form>
 
+{% if exchange_rates %}
+<div class="rates-widget">
+    <strong>Курсы валют</strong>
+    (1 USD ≈ {{ exchange_rates.USD }} BYN,
+     1 EUR ≈ {{ exchange_rates.EUR }} BYN)
+    {% if not exchange_rates.from_api %}<em> — резервные значения</em>{% endif %}
+</div>
+{% endif %}
+
 {% if user.is_superuser %}
 <p><a class="btn" href="{% url 'agency:property_create' %}">Добавить объект</a></p>
 {% endif %}
 
 <div class="grid-2">
-{% for prop in properties %}
+{% for item in properties_with_dates %}
+{% with prop=item.obj %}
 <article class="card">
     {% if prop.photo %}
     <a href="{% url 'agency:property_detail' prop.pk %}">
@@ -66,6 +76,7 @@
     <p>{{ prop.address }}</p>
     <p>{{ prop.property_type.name }} · {{ prop.area }} м² · {{ prop.rooms }} комн.</p>
     <p><strong>{{ prop.price }} BYN</strong></p>
+    <p><small>Добавлен: UTC {{ item.created_utc }} · {{ user_timezone }} {{ item.created_local }}</small></p>
     {% if user.is_superuser %}
     <p>
         <a href="{% url 'agency:property_update' prop.pk %}">Изменить</a> |
@@ -73,6 +84,7 @@
     </p>
     {% endif %}
 </article>
+{% endwith %}
 {% empty %}
 <p>Объекты не найдены.</p>
 {% endfor %}

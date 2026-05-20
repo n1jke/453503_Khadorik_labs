@@ -417,6 +417,13 @@ class UserProfile(models.Model):
         choices=ROLE_CHOICES,
         default=ROLE_CLIENT,
     )
+    timezone = models.CharField(
+        'Часовой пояс',
+        max_length=63,
+        blank=True,
+        default='Europe/Minsk',
+        help_text='IANA, например Europe/Minsk',
+    )
 
     class Meta:
         verbose_name = 'Профиль пользователя'

@@ -19,6 +19,13 @@ urlpatterns = [
     re_path(r'^reviews/add/?$', views.add_review_view, name='add_review'),
     re_path(r'^promocodes/?$', views.promocodes_view, name='promocodes'),
     re_path(r'^statistics/?$', views.statistics_view, name='statistics'),
+    re_path(r'^timezone/set/?$', views.set_timezone_view, name='set_timezone'),
+    re_path(r'^api/weather/?$', views.api_weather_view, name='api_weather'),
+    re_path(
+        r'^api/exchange-rates/?$',
+        views.api_exchange_rates_view,
+        name='api_exchange_rates',
+    ),
 
     re_path(r'^properties/?$', views.property_list_view, name='property_list'),
     re_path(

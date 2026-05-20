@@ -4,6 +4,19 @@
 
 {% block content %}
 <h2>Главная</h2>
+
+{% if weather %}
+<div class="weather-widget">
+    <strong>Погода в {{ weather.city }}:</strong>
+    {{ weather.temperature }}°C, {{ weather.description }}
+    {% if weather.humidity != '—' %} (влажность {{ weather.humidity }}%){% endif %}
+    {% if weather.from_api %}{% else %}<em> — резервные данные</em>{% endif %}
+    {% if weather.icon %}
+    <img src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="" width="50" height="50">
+    {% endif %}
+</div>
+{% endif %}
+
 {% if latest_article %}
 <section class="card">
     <h3>Последняя новость</h3>

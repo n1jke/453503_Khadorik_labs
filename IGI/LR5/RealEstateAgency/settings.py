@@ -10,10 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv(BASE_DIR / '.env')
+except ImportError:
+    pass
 
 
 # Quick-start development settings - unsuitable for production
@@ -61,9 +68,11 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
+                'django.template.context_processors.media',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'agency.context_processors.user_role',
+                'agency.context_processors.datetime_info',
             ],
         },
     },
@@ -132,3 +141,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'agency:login'
 LOGIN_REDIRECT_URL = 'agency:home'
 LOGOUT_REDIRECT_URL = 'agency:home'
+
+OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY', '')
+WEATHER_CITY = os.environ.get('WEATHER_CITY', 'Minsk')
+API_REQUEST_TIMEOUT = int(os.environ.get('API_REQUEST_TIMEOUT', '5'))

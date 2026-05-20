@@ -14,7 +14,15 @@
         <tr><th>Статус</th><td>{{ property.get_status_display }}</td></tr>
         <tr><th>Площадь</th><td>{{ property.area }} м²</td></tr>
         <tr><th>Комнаты / этаж</th><td>{{ property.rooms }} / {{ property.floor }}</td></tr>
-        <tr><th>Цена</th><td>{{ property.price }} BYN</td></tr>
+        <tr><th>Цена</th><td>
+            {{ property.price }} BYN
+            {% if price_usd %}<br><small>≈ {{ price_usd }} USD</small>{% endif %}
+            {% if price_eur %}<br><small>≈ {{ price_eur }} EUR</small>{% endif %}
+        </td></tr>
+        <tr><th>Добавлен (UTC)</th><td>{{ created_at_utc }}</td></tr>
+        <tr><th>Добавлен ({{ user_timezone }})</th><td>{{ created_at_local }}</td></tr>
+        <tr><th>Обновлён (UTC)</th><td>{{ updated_at_utc }}</td></tr>
+        <tr><th>Обновлён ({{ user_timezone }})</th><td>{{ updated_at_local }}</td></tr>
         <tr><th>Владелец</th><td>{{ property.owner.full_name }} ({{ property.owner.phone }})</td></tr>
     </table>
     <h3>Описание</h3>
@@ -23,6 +31,10 @@
     <p><strong>Доп. типы:</strong>
         {% for t in property.additional_types.all %}{{ t.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
     </p>
+    {% endif %}
+    {% if geo %}
+    <p><strong>Координаты (Nominatim):</strong> {{ geo.lat }}, {{ geo.lon }}</p>
+    <p><small>{{ geo.display_name }}</small></p>
     {% endif %}
 </article>
 

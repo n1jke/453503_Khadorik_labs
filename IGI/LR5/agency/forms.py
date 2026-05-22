@@ -1,4 +1,4 @@
-"""Формы регистрации, авторизации, отзывов и сделок."""
+"""Registration, auth, review, and deal forms."""
 
 from django import forms
 from django.contrib.auth import authenticate
@@ -15,14 +15,14 @@ from .validators import (
 
 
 def _html_attrs(**extra):
-    """Базовые HTML5-атрибуты для полей."""
+    """Base HTML5 attributes for form fields."""
     attrs = {'class': 'form-field'}
     attrs.update(extra)
     return attrs
 
 
 class RegistrationForm(forms.Form):
-    """Регистрация клиента."""
+    """Client registration."""
 
     username = forms.CharField(
         label='Логин',
@@ -108,7 +108,7 @@ class RegistrationForm(forms.Form):
 
 
 class LoginForm(forms.Form):
-    """Авторизация."""
+    """Login."""
 
     username = forms.CharField(
         label='Логин',
@@ -141,7 +141,7 @@ class LoginForm(forms.Form):
 
 
 class ReviewForm(forms.ModelForm):
-    """Добавление отзыва."""
+    """Review submission."""
 
     class Meta:
         model = Review
@@ -172,7 +172,7 @@ class ReviewForm(forms.ModelForm):
 
 
 class DealForm(forms.ModelForm):
-    """Оформление сделки клиентом."""
+    """Deal creation by client."""
 
     class Meta:
         model = Deal
@@ -196,7 +196,7 @@ class DealForm(forms.ModelForm):
 
 
 class RealEstateForm(forms.ModelForm):
-    """CRUD объекта недвижимости (админ)."""
+    """Real estate CRUD (admin)."""
 
     class Meta:
         model = RealEstate
@@ -238,7 +238,7 @@ class RealEstateForm(forms.ModelForm):
 
 
 class DealManageForm(forms.ModelForm):
-    """Редактирование сделки (сотрудник / админ)."""
+    """Deal edit (employee / admin)."""
 
     class Meta:
         model = Deal
@@ -267,6 +267,6 @@ class DealManageForm(forms.ModelForm):
 
 
 class DealAdminForm(DealManageForm):
-    """Полная форма сделки для администратора."""
+    """Full deal form for administrator."""
 
     pass

@@ -1,4 +1,4 @@
-"""Генерация графиков matplotlib (Agg) на данных из БД."""
+"""Matplotlib chart generation (Agg backend) from database data."""
 
 import os
 from datetime import datetime
@@ -21,7 +21,7 @@ DEAL_TYPE_LABELS = {
 
 
 def _save_chart(fig, prefix):
-    """Сохранить figure в MEDIA_ROOT/charts/."""
+    """Save figure under MEDIA_ROOT/charts/."""
     filename = f'{prefix}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.png'
     rel_path = os.path.join('charts', filename)
     filepath = os.path.join(settings.MEDIA_ROOT, rel_path)
@@ -32,12 +32,12 @@ def _save_chart(fig, prefix):
 
 
 def generate_deals_by_type_chart():
-    """Столбчатая диаграмма: сделки по типам."""
+    """Bar chart: deals by type."""
     rows = Deal.objects.values('deal_type').annotate(count=Count('id'))
     labels = [DEAL_TYPE_LABELS.get(r['deal_type'], r['deal_type']) for r in rows]
     counts = [r['count'] for r in rows]
     if not counts:
-        labels, counts = ['Нет данных'], [0]
+        labels, counts = ['N/A'], [0]
 
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.bar(labels, counts, color=['#4CAF50', '#2196F3'][: len(labels)])
@@ -48,7 +48,7 @@ def generate_deals_by_type_chart():
 
 
 def generate_deals_over_time_chart():
-    """Линейный график: сделки по месяцам."""
+    """Line chart: deals per month."""
     rows = (
         Deal.objects.annotate(month=TruncMonth('deal_date'))
         .values('month')
@@ -56,12 +56,12 @@ def generate_deals_over_time_chart():
         .order_by('month')
     )
     months = [
-        r['month'].strftime('%Y-%m') if r['month'] else '—'
+        r['month'].strftime('%Y-%m') if r['month'] else 'N/A'
         for r in rows
     ]
     counts = [r['count'] for r in rows]
     if not months:
-        months, counts = ['—'], [0]
+        months, counts = ['N/A'], [0]
 
     fig, ax = plt.subplots(figsize=(8, 4))
     ax.plot(months, counts, marker='o', color='#FF5722', linewidth=2)
@@ -74,14 +74,14 @@ def generate_deals_over_time_chart():
 
 
 def generate_property_types_chart():
-    """Круговая диаграмма: объекты по типам недвижимости."""
+    """Pie chart: listings by property type."""
     types = PropertyType.objects.annotate(
         count=Count('primary_estates'),
     ).order_by('-count')
     labels = [t.name for t in types]
     counts = [t.count for t in types]
     if not counts or sum(counts) == 0:
-        labels, counts = ['Нет данных'], [1]
+        labels, counts = ['N/A'], [1]
 
     fig, ax = plt.subplots(figsize=(7, 5))
     ax.pie(counts, labels=labels, autopct='%1.1f%%', startangle=90)
@@ -90,7 +90,7 @@ def generate_property_types_chart():
 
 
 def generate_all_charts():
-    """Сгенерировать все графики для страницы статистики."""
+    """Generate all charts for the statistics page."""
     return {
         'deals_by_type': generate_deals_by_type_chart(),
         'deals_timeline': generate_deals_over_time_chart(),

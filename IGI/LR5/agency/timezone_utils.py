@@ -1,4 +1,4 @@
-"""Таймзоны пользователя, формат DD/MM/YYYY, текстовый календарь."""
+"""User timezone, DD/MM/YYYY format, text calendar."""
 
 import calendar
 
@@ -20,8 +20,8 @@ COMMON_TIMEZONES = sorted([
 
 def get_user_timezone(request):
     """
-    Определить таймзону через zoneinfo:
-    профиль → сессия → заголовок X-Timezone → Europe/Minsk.
+    Resolve timezone via zoneinfo:
+    profile, then session, then X-Timezone header, then Europe/Minsk.
     """
     if hasattr(request, 'user') and request.user.is_authenticated:
         profile = getattr(request.user, 'profile', None)
@@ -51,18 +51,18 @@ def get_user_timezone(request):
 
 
 def format_datetime_ddmmyyyy(dt, tz=None):
-    """Дата/время в формате DD/MM/YYYY HH:MM."""
+    """Datetime as DD/MM/YYYY HH:MM."""
     if dt is None:
-        return '—'
+        return 'N/A'
     if timezone.is_aware(dt) and tz:
         dt = dt.astimezone(tz)
     return dt.strftime('%d/%m/%Y %H:%M')
 
 
 def format_date_ddmmyyyy(dt, tz=None):
-    """Только дата DD/MM/YYYY."""
+    """Date only as DD/MM/YYYY."""
     if dt is None:
-        return '—'
+        return 'N/A'
     if hasattr(dt, 'hour'):
         if timezone.is_aware(dt) and tz:
             dt = dt.astimezone(tz)
@@ -71,10 +71,10 @@ def format_date_ddmmyyyy(dt, tz=None):
 
 
 def get_datetime_context(request):
-    """Контекст для шаблонов: UTC + локальная TZ, текстовый календарь."""
-    user_zone = get_user_timezone(request)
+    """Template context: UTC and local TZ, text calendar."""
+    user_tz = get_user_timezone(request)
     now_utc = timezone.now()
-    now_local = now_utc.astimezone(user_zone)
+    now_local = now_utc.astimezone(user_tz)
 
     cal = calendar.TextCalendar(calendar.MONDAY)
     text_calendar = cal.formatmonth(now_local.year, now_local.month)
@@ -85,12 +85,12 @@ def get_datetime_context(request):
         'current_time_utc': now_utc.strftime('%H:%M:%S'),
         'current_time_local': now_local.strftime('%H:%M:%S'),
         'text_calendar': text_calendar,
-        'user_timezone': str(user_zone),
+        'user_timezone': str(user_tz),
         'common_timezones': COMMON_TIMEZONES,
-        'user_zone': user_zone,
+        'user_tz': user_tz,
     }
 
 
 def is_valid_timezone(name):
-    """Проверка имени таймзоны через zoneinfo."""
+    """Validate IANA timezone name via zoneinfo."""
     return name in available_timezones()

@@ -3,3 +3,12 @@ Pillow>=10.0
 requests>=2.31
 matplotlib>=3.8
 python-dotenv>=1.0
+gunicorn>=21.2
+psycopg2-binary>=2.9
+dj-database-url>=2.1
+whitenoise>=6.6
+
+# Testing (local / CI)
+pytest>=7.4
+pytest-django>=4.7
+pytest-cov>=4.1

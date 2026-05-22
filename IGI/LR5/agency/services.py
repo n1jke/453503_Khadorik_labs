@@ -1,4 +1,4 @@
-"""Интеграция с внешними API (requests)."""
+"""External API integration (requests)."""
 
 import logging
 from urllib.parse import quote
@@ -12,10 +12,10 @@ REQUEST_TIMEOUT = getattr(settings, 'API_REQUEST_TIMEOUT', 5)
 
 DEFAULT_WEATHER = {
     'city': 'Минск',
-    'temperature': '—',
+    'temperature': 'N/A',
     'description': 'Данные недоступны',
     'icon': '',
-    'humidity': '—',
+    'humidity': 'N/A',
     'from_api': False,
 }
 
@@ -31,13 +31,13 @@ DEFAULT_RATES = {
 
 def get_weather(city=None):
     """
-    OpenWeatherMap — текущая погода.
-    Ключ: OPENWEATHER_API_KEY в .env / settings.
+    OpenWeatherMap current weather.
+    API key: OPENWEATHER_API_KEY in .env / settings.
     """
     city = city or getattr(settings, 'WEATHER_CITY', 'Minsk')
     api_key = getattr(settings, 'OPENWEATHER_API_KEY', '') or ''
     if not api_key:
-        logger.warning('OPENWEATHER_API_KEY не задан')
+        logger.warning('OPENWEATHER_API_KEY is not set')
         result = DEFAULT_WEATHER.copy()
         result['city'] = city
         return result
@@ -55,18 +55,18 @@ def get_weather(city=None):
             'temperature': round(data['main']['temp'], 1),
             'description': data['weather'][0]['description'].capitalize(),
             'icon': data['weather'][0]['icon'],
-            'humidity': data['main'].get('humidity', '—'),
+            'humidity': data['main'].get('humidity', 'N/A'),
             'from_api': True,
         }
-    except (requests.RequestException, KeyError, TypeError) as exc:
-        logger.error('Ошибка OpenWeatherMap: %s', exc)
+    except (requests.RequestException, KeyError, TypeError, ValueError) as exc:
+        logger.error('OpenWeatherMap error: %s', exc)
         result = DEFAULT_WEATHER.copy()
         result['city'] = city
         return result
 
 
 def get_exchange_rates():
-    """ExchangeRate-API — курсы USD/EUR к BYN."""
+    """ExchangeRate-API: USD/EUR rates against BYN."""
     url = 'https://api.exchangerate-api.com/v4/latest/BYN'
     try:
         response = requests.get(url, timeout=REQUEST_TIMEOUT)
@@ -75,7 +75,7 @@ def get_exchange_rates():
         usd = rates.get('USD')
         eur = rates.get('EUR')
         if not usd or not eur:
-            raise ValueError('Неполный ответ API')
+            raise ValueError('Incomplete API response')
         return {
             'base': 'BYN',
             'USD': round(1 / usd, 4) if usd else None,
@@ -84,15 +84,15 @@ def get_exchange_rates():
             'EUR_per_byn': eur,
             'from_api': True,
         }
-    except (requests.RequestException, ValueError, TypeError) as exc:
-        logger.error('Ошибка ExchangeRate-API: %s', exc)
+    except (requests.RequestException, ValueError, TypeError, KeyError) as exc:
+        logger.error('ExchangeRate-API error: %s', exc)
         return DEFAULT_RATES.copy()
 
 
 def geocode_address(address):
     """
-    Nominatim (OpenStreetMap) — координаты по адресу.
-    Дополнительный гео-API для карточки объекта.
+    Nominatim (OpenStreetMap): coordinates for an address.
+    Optional geo API for property detail page.
     """
     url = (
         'https://nominatim.openstreetmap.org/search'
@@ -117,5 +117,5 @@ def geocode_address(address):
             'from_api': True,
         }
     except (requests.RequestException, KeyError, TypeError) as exc:
-        logger.error('Ошибка Nominatim: %s', exc)
+        logger.error('Nominatim error: %s', exc)
         return None

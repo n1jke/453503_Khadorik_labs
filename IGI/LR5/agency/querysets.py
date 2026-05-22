@@ -1,4 +1,4 @@
-"""Фильтрация, поиск и сортировка списков."""
+"""List filtering, search, and sorting."""
 
 from decimal import Decimal, InvalidOperation
 
@@ -7,9 +7,9 @@ from django.db.models import Q
 
 def filter_properties(queryset, params):
     """
-    Поиск (?q=), фильтры (price_min, price_max, type, status, rooms),
-    сортировка (?sort=price_asc|price_desc|area|date).
-    Возвращает (queryset, context_dict для шаблона).
+    Search (?q=), filters (price_min, price_max, type, status, rooms),
+    sort (?sort=price_asc|price_desc|area|date).
+    Returns (queryset, context dict for templates).
     """
     ctx = {
         'q': params.get('q', '').strip(),

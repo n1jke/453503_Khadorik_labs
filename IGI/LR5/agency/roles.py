@@ -1,4 +1,4 @@
-"""Роли пользователей и декораторы доступа."""
+"""User roles and access decorators."""
 
 from functools import wraps
 
@@ -14,8 +14,8 @@ ROLE_ADMIN = 'admin'
 
 def get_user_role(user):
     """
-    Определить роль: anonymous, client, employee, admin.
-    Superuser — admin; наличие Employee — employee; иначе client.
+    Resolve role: anonymous, client, employee, admin.
+    Superuser is admin; Employee profile is employee; otherwise client.
     """
     if user is None or not user.is_authenticated:
         return ROLE_ANONYMOUS
@@ -30,7 +30,7 @@ def get_user_role(user):
 
 
 def get_client_buyer(user):
-    """Профиль покупателя, связанный с пользователем-клиентом."""
+    """Buyer profile linked to the client user."""
     if get_user_role(user) != ROLE_CLIENT:
         return None
     return getattr(user, 'buyer_profile', None)
@@ -44,7 +44,7 @@ def _role_test(*allowed_roles):
 
 
 def role_required(*allowed_roles):
-    """Декоратор: доступ только для указанных ролей."""
+    """Decorator: allow only the given roles."""
     def decorator(view_func):
         @login_required
         @user_passes_test(
@@ -61,29 +61,27 @@ def role_required(*allowed_roles):
 
 
 def client_required(view_func):
-    """Только зарегистрированный клиент."""
+    """Registered client only."""
     return role_required(ROLE_CLIENT)(view_func)
 
 
 def employee_required(view_func):
-    """Только сотрудник."""
+    """Employee only."""
     return role_required(ROLE_EMPLOYEE)(view_func)
 
 
 def admin_required(view_func):
-    """Только суперпользователь."""
+    """Superuser only."""
     return role_required(ROLE_ADMIN)(view_func)
 
 
 def staff_or_admin_required(view_func):
-    """Сотрудник или администратор."""
+    """Employee or administrator."""
     return role_required(ROLE_EMPLOYEE, ROLE_ADMIN)(view_func)
 
 
 def login_required_api(view_func):
-    """
-    Для API-представлений (этап 04): только авторизованные пользователи.
-    """
+    """API views: authenticated users only."""
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:

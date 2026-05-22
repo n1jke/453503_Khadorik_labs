@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Главная — Агентство недвижимости{% endblock %}
+{% block title %}Главная - Агентство недвижимости{% endblock %}
 
 {% block content %}
 <h2>Главная</h2>
@@ -9,8 +9,8 @@
 <div class="weather-widget">
     <strong>Погода в {{ weather.city }}:</strong>
     {{ weather.temperature }}°C, {{ weather.description }}
-    {% if weather.humidity != '—' %} (влажность {{ weather.humidity }}%){% endif %}
-    {% if weather.from_api %}{% else %}<em> — резервные данные</em>{% endif %}
+    {% if weather.humidity != 'N/A' %} (влажность {{ weather.humidity }}%){% endif %}
+    {% if weather.from_api %}{% else %}<em> (резервные данные)</em>{% endif %}
     {% if weather.icon %}
     <img src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="" width="50" height="50">
     {% endif %}

@@ -10,6 +10,10 @@ env/
 ENV/
 *.venv/
 
+# Logs
+logs/
+*.log
+
 # Django specific
 local_settings.py
 db.sqlite3
@@ -40,5 +44,4 @@ coverage.xml
 .idea/
 *.swp
 *.swo
-temp/
-docs/
+temp/   

@@ -1,4 +1,4 @@
-"""URL-маршруты приложения agency (только re_path)."""
+"""Agency URL routes (re_path only)."""
 
 from django.urls import re_path
 

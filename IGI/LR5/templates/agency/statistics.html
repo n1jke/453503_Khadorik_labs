@@ -23,7 +23,7 @@
         <p>Медиана сумм</p>
     </div>
     <div class="stat-box">
-        <strong>{{ stats.deal_stats.mode|default:"—" }}</strong>
+        <strong>{{ stats.deal_stats.mode|default:"N/A" }}</strong>
         <p>Мода сумм</p>
     </div>
     <div class="stat-box">
@@ -39,11 +39,11 @@
 
 <h3>Типы недвижимости</h3>
 <p>Популярный (по сделкам):
-    <strong>{{ stats.popular_type|default:"—" }}</strong>
+    <strong>{{ stats.popular_type|default:"N/A" }}</strong>
     {% if stats.popular_type %}({{ stats.popular_type.deal_count }} сделок){% endif %}
 </p>
 <p>Самый прибыльный:
-    <strong>{{ stats.profitable_type|default:"—" }}</strong>
+    <strong>{{ stats.profitable_type|default:"N/A" }}</strong>
     {% if stats.profitable_type %}({{ stats.profitable_type.total_amount|floatformat:0 }} BYN){% endif %}
 </p>
 

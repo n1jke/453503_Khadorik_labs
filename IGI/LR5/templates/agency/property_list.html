@@ -19,14 +19,14 @@
     <p>
         <label>Тип</label>
         <select name="type">
-            <option value="">— все —</option>
+            <option value="">все</option>
             {% for pt in property_types %}
             <option value="{{ pt.pk }}" {% if filters.type == pt.pk|stringformat:"s" %}selected{% endif %}>{{ pt.name }}</option>
             {% endfor %}
         </select>
         <label>Статус</label>
         <select name="status">
-            <option value="">— все —</option>
+            <option value="">все</option>
             {% for val, label in status_choices %}
             <option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
@@ -54,7 +54,7 @@
     <strong>Курсы валют</strong>
     (1 USD ≈ {{ exchange_rates.USD }} BYN,
      1 EUR ≈ {{ exchange_rates.EUR }} BYN)
-    {% if not exchange_rates.from_api %}<em> — резервные значения</em>{% endif %}
+    {% if not exchange_rates.from_api %}<em> (резервные значения)</em>{% endif %}
 </div>
 {% endif %}
 
@@ -72,7 +72,7 @@
     </a>
     {% endif %}
     <h3><a href="{% url 'agency:property_detail' prop.pk %}">{{ prop.title }}</a></h3>
-    <p><code>{{ prop.code }}</code> — {{ prop.get_status_display }}</p>
+    <p><code>{{ prop.code }}</code> - {{ prop.get_status_display }}</p>
     <p>{{ prop.address }}</p>
     <p>{{ prop.property_type.name }} · {{ prop.area }} м² · {{ prop.rooms }} комн.</p>
     <p><strong>{{ prop.price }} BYN</strong></p>

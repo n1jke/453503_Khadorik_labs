@@ -4,7 +4,7 @@
 
 {% block content %}
 <h2>Удалить сделку?</h2>
-<p>{{ deal }} — {{ deal.buyer }} — {{ deal.amount }} BYN</p>
+<p>{{ deal }} - {{ deal.buyer }} - {{ deal.amount }} BYN</p>
 <form method="post">
     {% csrf_token %}
     <button type="submit" class="btn btn-danger">Удалить</button>

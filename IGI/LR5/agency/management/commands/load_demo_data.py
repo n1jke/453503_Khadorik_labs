@@ -1,4 +1,4 @@
-"""Management-команда: наполнение БД демонстрационными данными (10+ записей в каждой таблице)."""
+"""Load demo data (10+ rows per table)."""
 
 import random
 from datetime import date, datetime, timedelta
@@ -33,13 +33,13 @@ except ImportError:
 
 
 def phone_number(index):
-    """Телефон в формате +375 (29) XXX-XX-XX."""
+    """Phone in +375 (29) XXX-XX-XX format."""
     part = 100 + index
     return f'+375 (29) {part:03d}-{index % 100:02d}-{index % 100:02d}'
 
 
 def make_image(name, color):
-    """Создать простое PNG-изображение для ImageField."""
+    """Create a simple PNG image for ImageField."""
     if Image is None:
         return ContentFile(b'', name=f'{name}.png')
     img = Image.new('RGB', (400, 300), color=color)

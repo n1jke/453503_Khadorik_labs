@@ -29,7 +29,7 @@
 
 {% for review in reviews %}
 <article class="card">
-    <h4>{{ review.name }} — {{ review.rating }}/5</h4>
+    <h4>{{ review.name }} - {{ review.rating }}/5</h4>
     <p>{{ review.text }}</p>
     <p><small>{{ review.created_at|date:"d/m/Y H:i" }}</small></p>
 </article>

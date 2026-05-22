@@ -1,4 +1,4 @@
-"""Сигналы: профиль пользователя, группы, синхронизация роли сотрудника."""
+"""Signals: user profile, groups, employee role sync."""
 
 from django.contrib.auth.models import Group, User
 from django.db.models.signals import post_save
@@ -11,14 +11,14 @@ GROUP_EMPLOYEES = 'Employees'
 
 
 def ensure_role_groups():
-    """Создать группы Clients и Employees при старте приложения."""
+    """Create Clients and Employees groups on app startup."""
     Group.objects.get_or_create(name=GROUP_CLIENTS)
     Group.objects.get_or_create(name=GROUP_EMPLOYEES)
 
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
-    """Профиль с ролью client для новых пользователей (кроме суперюзера)."""
+    """Create client profile for new users (except superuser)."""
     if created and not instance.is_superuser:
         UserProfile.objects.get_or_create(
             user=instance,
@@ -28,7 +28,7 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Employee)
 def sync_employee_role(sender, instance, **kwargs):
-    """При создании сотрудника — роль employee в профиле и группа Employees."""
+    """On employee create: set employee role and add to Employees group."""
     profile, _ = UserProfile.objects.get_or_create(user=instance.user)
     if profile.role != UserProfile.ROLE_EMPLOYEE:
         profile.role = UserProfile.ROLE_EMPLOYEE

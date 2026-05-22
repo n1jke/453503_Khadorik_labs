@@ -1,4 +1,4 @@
-"""Модели приложения agency — агентство недвижимости."""
+"""Agency app models for the real estate domain."""
 
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -13,7 +13,7 @@ from .validators import (
 
 
 class PropertyType(models.Model):
-    """Вид недвижимости."""
+    """Property type."""
 
     name = models.CharField(
         'Название типа',
@@ -35,7 +35,7 @@ class PropertyType(models.Model):
 
 
 class Owner(models.Model):
-    """Владелец объекта недвижимости."""
+    """Property owner."""
 
     full_name = models.CharField(
         'ФИО',
@@ -60,7 +60,7 @@ class Owner(models.Model):
 
 
 class RealEstate(models.Model):
-    """Объект недвижимости."""
+    """Real estate listing."""
 
     STATUS_AVAILABLE = 'available'
     STATUS_SOLD = 'sold'
@@ -136,11 +136,11 @@ class RealEstate(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f'{self.code} — {self.title}'
+        return f'{self.code} - {self.title}'
 
 
 class Employee(models.Model):
-    """Сотрудник агентства."""
+    """Agency employee."""
 
     user = models.OneToOneField(
         User,
@@ -176,7 +176,7 @@ class Employee(models.Model):
 
 
 class Buyer(models.Model):
-    """Покупатель или арендатор."""
+    """Buyer or tenant."""
 
     user = models.OneToOneField(
         User,
@@ -213,7 +213,7 @@ class Buyer(models.Model):
 
 
 class Deal(models.Model):
-    """Сделка по продаже или аренде."""
+    """Sale or rental deal."""
 
     DEAL_SALE = 'sale'
     DEAL_RENT = 'rent'
@@ -265,11 +265,11 @@ class Deal(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.get_deal_type_display()} — {self.real_estate.code}'
+        return f'{self.get_deal_type_display()} - {self.real_estate.code}'
 
 
 class Article(models.Model):
-    """Статья для главной страницы и раздела новостей."""
+    """Article for home and news pages."""
 
     title = models.CharField('Заголовок', max_length=200)
     content = models.TextField('Полное содержание')
@@ -288,7 +288,7 @@ class Article(models.Model):
 
 
 class CompanyInfo(models.Model):
-    """Информация о компании (разделы сайта)."""
+    """Company information sections."""
 
     SECTION_ABOUT = 'about'
     SECTION_CONTACTS = 'contacts'
@@ -316,7 +316,7 @@ class CompanyInfo(models.Model):
 
 
 class GlossaryTerm(models.Model):
-    """Термин словаря."""
+    """Glossary term."""
 
     term = models.CharField('Термин', max_length=200)
     definition = models.TextField('Определение')
@@ -332,7 +332,7 @@ class GlossaryTerm(models.Model):
 
 
 class Vacancy(models.Model):
-    """Вакансия."""
+    """Job vacancy."""
 
     title = models.CharField('Название', max_length=200)
     description = models.TextField('Описание')
@@ -349,7 +349,7 @@ class Vacancy(models.Model):
 
 
 class Review(models.Model):
-    """Отзыв клиента."""
+    """Customer review."""
 
     RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]
 
@@ -373,7 +373,7 @@ class Review(models.Model):
 
 
 class PromoCode(models.Model):
-    """Промокод или купон."""
+    """Promo code or coupon."""
 
     code = models.CharField('Промокод', max_length=50, unique=True)
     discount = models.DecimalField(
@@ -396,7 +396,7 @@ class PromoCode(models.Model):
 
 
 class UserProfile(models.Model):
-    """Профиль пользователя с ролью client / employee."""
+    """User profile with client / employee role."""
 
     ROLE_CLIENT = 'client'
     ROLE_EMPLOYEE = 'employee'

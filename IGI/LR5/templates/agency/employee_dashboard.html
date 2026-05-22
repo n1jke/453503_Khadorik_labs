@@ -23,8 +23,8 @@
 </table>
 
 <h3>Объекты</h3>
-<ul>{% for e in estates %}<li><a href="{% url 'agency:property_detail' e.pk %}">{{ e }}</a></li>{% empty %}<li>—</li>{% endfor %}</ul>
+<ul>{% for e in estates %}<li><a href="{% url 'agency:property_detail' e.pk %}">{{ e }}</a></li>{% empty %}<li>N/A</li>{% endfor %}</ul>
 
 <h3>Клиенты</h3>
-<ul>{% for b in buyers %}<li>{{ b.full_name }} — {{ b.phone }}</li>{% empty %}<li>—</li>{% endfor %}</ul>
+<ul>{% for b in buyers %}<li>{{ b.full_name }} - {{ b.phone }}</li>{% empty %}<li>N/A</li>{% endfor %}</ul>
 {% endblock %}

@@ -1,4 +1,4 @@
-"""Расчёт статистических показателей для панели администратора."""
+"""Statistics for the admin dashboard."""
 
 from datetime import date, timedelta
 from statistics import mean, median, mode, multimode
@@ -11,7 +11,7 @@ from .validators import calculate_age
 
 
 def _safe_mode(values):
-    """Мода; при нескольких — список через multimode."""
+    """Mode; if multiple modes exist, use multimode."""
     if not values:
         return None
     try:
@@ -22,7 +22,7 @@ def _safe_mode(values):
 
 
 def compute_statistics():
-    """Собрать все показатели для statistics.html."""
+    """Collect all metrics for statistics.html."""
     estates_alpha = RealEstate.objects.order_by('title')
     buyers_alpha = Buyer.objects.order_by('full_name')
 

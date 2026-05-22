@@ -1,4 +1,4 @@
-"""Регистрация моделей в админ-панели Django."""
+"""Django admin model registration."""
 
 from django.contrib import admin
 from django.utils.html import format_html
@@ -28,7 +28,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 
 class RealEstateInline(admin.TabularInline):
-    """Объекты недвижимости внутри вида."""
+    """Real estate listings inside property type."""
 
     model = RealEstate
     extra = 0
@@ -37,7 +37,7 @@ class RealEstateInline(admin.TabularInline):
 
 
 class DealInline(admin.TabularInline):
-    """Сделки сотрудника."""
+    """Employee deals inline."""
 
     model = Deal
     extra = 0
@@ -105,7 +105,7 @@ class RealEstateAdmin(admin.ModelAdmin):
                 '<img src="{}" width="50" height="50" style="object-fit:cover;" />',
                 obj.photo.url,
             )
-        return '—'
+        return 'N/A'
 
     @admin.display(description='Превью фото')
     def photo_preview_large(self, obj):
@@ -146,7 +146,7 @@ class EmployeeAdmin(admin.ModelAdmin):
                 '<img src="{}" width="40" height="40" style="object-fit:cover;" />',
                 obj.photo.url,
             )
-        return '—'
+        return 'N/A'
 
     @admin.display(description='Превью')
     def photo_preview_large(self, obj):

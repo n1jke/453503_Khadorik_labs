@@ -1,5 +1,6 @@
-"""Function-Based Views: страницы, CRUD, авторизация."""
+"""Function-based views: pages, CRUD, authentication."""
 
+import logging
 from datetime import date
 
 from django.contrib import messages
@@ -55,16 +56,18 @@ from .roles import (
 )
 from .signals import GROUP_CLIENTS
 
+logger = logging.getLogger('agency')
+
 
 def _page(request, template, extra=None):
-    """Базовый контекст страницы."""
+    """Base page context."""
     ctx = {'user_role': get_user_role(request.user)}
     if extra:
         ctx.update(extra)
     return render(request, template, ctx)
 
 
-# --- Авторизация ---
+# --- Authentication ---
 
 
 def register_view(request):
@@ -95,8 +98,10 @@ def register_view(request):
                 clients_group, _ = Group.objects.get_or_create(name=GROUP_CLIENTS)
                 user.groups.add(clients_group)
             login(request, user)
+            logger.info('New user registered: %s', user.username)
             messages.success(request, 'Регистрация прошла успешно.')
             return redirect('agency:home')
+        logger.warning('Registration failed: %s', form.errors)
     else:
         form = RegistrationForm()
     return _page(request, 'agency/register.html', {'form': form, 'title': 'Регистрация'})
@@ -109,11 +114,14 @@ def login_view(request):
         form = LoginForm(request, data=request.POST)
         if form.is_valid():
             login(request, form.user)
+            logger.info('User %s logged in successfully', form.user.username)
             messages.success(request, 'Вы успешно вошли в систему.')
             next_url = request.GET.get('next')
             if next_url:
                 return redirect(next_url)
             return redirect('agency:home')
+        username = request.POST.get('username', '')
+        logger.warning('Failed login attempt for username: %s', username)
     else:
         form = LoginForm(request)
     return _page(request, 'agency/login.html', {'form': form, 'title': 'Вход'})
@@ -121,12 +129,14 @@ def login_view(request):
 
 @login_required
 def logout_view(request):
+    if request.user.is_authenticated:
+        logger.info('User %s logged out', request.user.username)
     logout(request)
     messages.info(request, 'Вы вышли из системы.')
     return redirect('agency:home')
 
 
-# --- Публичные страницы ---
+# --- Public pages ---
 
 
 def home_view(request):
@@ -224,7 +234,7 @@ def promocodes_view(request):
 
 @admin_required
 def statistics_view(request):
-    """Статистика и графики matplotlib (только админ)."""
+    """Statistics and matplotlib charts (admin only)."""
     stats = compute_statistics()
     charts = generate_all_charts()
     return _page(request, 'agency/statistics.html', {
@@ -235,7 +245,7 @@ def statistics_view(request):
 
 @require_POST
 def set_timezone_view(request):
-    """Сохранить таймзону в сессии и профиле."""
+    """Save timezone to session and user profile."""
     tz_name = request.POST.get('timezone', '').strip()
     if not is_valid_timezone(tz_name):
         messages.error(request, 'Некорректная таймзона.')
@@ -251,7 +261,7 @@ def set_timezone_view(request):
 
 @login_required_api
 def api_weather_view(request):
-    """JSON API погоды — только для авторизованных."""
+    """Weather JSON API (authenticated users only)."""
     city = request.GET.get('city')
     data = get_weather(city)
     return JsonResponse(data)
@@ -259,11 +269,11 @@ def api_weather_view(request):
 
 @login_required_api
 def api_exchange_rates_view(request):
-    """JSON API курсов валют — только для авторизованных."""
+    """Exchange rates JSON API (authenticated users only)."""
     return JsonResponse(get_exchange_rates())
 
 
-# --- Объекты недвижимости ---
+# --- Real estate ---
 
 
 def property_list_view(request):
@@ -325,9 +335,15 @@ def property_create_view(request):
     if request.method == 'POST':
         form = RealEstateForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
+            obj = form.save()
+            logger.info(
+                'Property %s created by %s',
+                obj.pk,
+                request.user.username,
+            )
             messages.success(request, 'Объект создан.')
             return redirect('agency:property_list')
+        logger.error('Property creation failed: %s', form.errors)
     else:
         form = RealEstateForm()
     return _page(request, 'agency/property_form.html', {
@@ -345,8 +361,14 @@ def property_update_view(request, pk):
         form = RealEstateForm(request.POST, request.FILES, instance=prop)
         if form.is_valid():
             form.save()
+            logger.info(
+                'Property %s updated by %s',
+                pk,
+                request.user.username,
+            )
             messages.success(request, 'Объект обновлён.')
             return redirect('agency:property_detail', pk=pk)
+        logger.error('Property update failed: %s', form.errors)
     else:
         form = RealEstateForm(instance=prop)
     return _page(request, 'agency/property_form.html', {
@@ -362,13 +384,19 @@ def property_delete_view(request, pk):
         return redirect('agency:property_list')
     prop = get_object_or_404(RealEstate, pk=pk)
     if request.method == 'POST':
+        prop_id = prop.pk
         prop.delete()
+        logger.info(
+            'Property %s deleted by %s',
+            prop_id,
+            request.user.username,
+        )
         messages.success(request, 'Объект удалён.')
         return redirect('agency:property_list')
     return _page(request, 'agency/property_confirm_delete.html', {'property': prop})
 
 
-# --- Сделки ---
+# --- Deals ---
 
 
 def _deals_for_user(user):
@@ -411,9 +439,10 @@ def create_deal_view(request):
             estate = form.cleaned_data['real_estate']
             employee = Employee.objects.first()
             if not employee:
+                logger.error('Deal creation failed: no employees available')
                 messages.error(request, 'Нет доступных сотрудников.')
             else:
-                Deal.objects.create(
+                deal = Deal.objects.create(
                     deal_type=form.cleaned_data['deal_type'],
                     real_estate=estate,
                     employee=employee,
@@ -427,8 +456,14 @@ def create_deal_view(request):
                     else RealEstate.STATUS_RENTED
                 )
                 estate.save(update_fields=['status'])
+                logger.info(
+                    'Deal %s created by user %s',
+                    deal.pk,
+                    request.user.username,
+                )
                 messages.success(request, 'Сделка оформлена.')
                 return redirect('agency:my_purchases')
+        logger.error('Deal creation failed: %s', form.errors)
     else:
         form = DealForm()
     return _page(request, 'agency/deal_form.html', {

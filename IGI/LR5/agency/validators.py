@@ -1,4 +1,4 @@
-"""Кастомные валидаторы для моделей и форм."""
+"""Custom validators for models and forms."""
 
 import re
 from datetime import date
@@ -18,7 +18,7 @@ PHONE_INPUT_PATTERN = r'\+375 \(29\) \d{3}-\d{2}-\d{2}'
 
 
 def validate_phone(value):
-    """Проверка телефона по regex (+375 (29) XXX-XX-XX)."""
+    """Validate phone against regex (+375 (29) XXX-XX-XX)."""
     if not re.match(PHONE_REGEX_PATTERN, value or ''):
         raise ValidationError(
             'Телефон должен быть в формате +375 (29) XXX-XX-XX.',
@@ -27,7 +27,7 @@ def validate_phone(value):
 
 
 def calculate_age(birth_date, today=None):
-    """Возраст в полных годах по дате рождения."""
+    """Full years of age from birth date."""
     today = today or date.today()
     return (
         today.year
@@ -37,13 +37,13 @@ def calculate_age(birth_date, today=None):
 
 
 def calculate_age_days(birth_date, today=None):
-    """Возраст в годах через целочисленное деление дней (для форм)."""
+    """Age in years via integer division of days (for forms)."""
     today = today or date.today()
     return (today - birth_date).days // 365
 
 
 def validate_age_18_plus(value):
-    """Проверка возраста не менее 18 лет (для моделей)."""
+    """Require age of at least 18 years (model-level)."""
     if calculate_age(value) < 18:
         raise ValidationError(
             'Возраст должен быть не менее 18 лет.',
@@ -52,7 +52,7 @@ def validate_age_18_plus(value):
 
 
 def validate_age_18_plus_form(birth_date):
-    """Проверка 18+ для форм (расчёт через days // 365)."""
+    """Require 18+ for forms (days // 365)."""
     if calculate_age_days(birth_date) < 18:
         raise ValidationError(
             'Возраст должен быть не менее 18 лет.',
@@ -61,7 +61,7 @@ def validate_age_18_plus_form(birth_date):
 
 
 def validate_non_whitespace(value):
-    """Поле не должно состоять только из пробелов."""
+    """Reject values that are empty or whitespace only."""
     if value is None:
         return
     if not str(value).strip():
@@ -72,7 +72,7 @@ def validate_non_whitespace(value):
 
 
 def validate_positive_decimal(value):
-    """Число должно быть строго больше нуля."""
+    """Value must be strictly greater than zero."""
     if value is None:
         return
     if Decimal(value) <= 0:

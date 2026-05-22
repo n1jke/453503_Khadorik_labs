@@ -7,4 +7,3 @@ class AgencyConfig(AppConfig):
 
     def ready(self):
         from . import signals  # noqa: F401
-        signals.ensure_role_groups()

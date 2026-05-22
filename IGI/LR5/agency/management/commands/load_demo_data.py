@@ -60,13 +60,26 @@ class Command(BaseCommand):
             action='store_true',
             help='Удалить существующие данные agency перед загрузкой',
         )
+        parser.add_argument(
+            '--ensure-images',
+            action='store_true',
+            help='Создать отсутствующие PNG для объектов, сотрудников и статей',
+        )
 
     def handle(self, *args, **options):
         if options['flush']:
             self._flush_data()
 
         if PropertyType.objects.exists():
-            self.stdout.write(self.style.WARNING('Данные уже есть. Используйте --flush.'))
+            if options['ensure_images']:
+                created = self._ensure_images()
+                self.stdout.write(
+                    self.style.SUCCESS(f'Проверка изображений: создано {created}.'),
+                )
+            else:
+                self.stdout.write(
+                    self.style.WARNING('Данные уже есть. Используйте --flush или --ensure-images.'),
+                )
             return
 
         property_types = self._create_property_types()
@@ -86,6 +99,45 @@ class Command(BaseCommand):
         call_command('sync_profiles')
 
         self.stdout.write(self.style.SUCCESS('Демо-данные успешно загружены.'))
+
+    def _file_missing(self, field_file):
+        if not field_file or not field_file.name:
+            return True
+        return not field_file.storage.exists(field_file.name)
+
+    def _ensure_images(self):
+        """Recreate PNG files missing on disk (e.g. after Render redeploy)."""
+        colors = [
+            '#2c3e50', '#8e44ad', '#27ae60', '#c0392b',
+            '#2980b9', '#d35400', '#16a085', '#7f8c8d',
+            '#34495e', '#e67e22', '#1abc9c', '#9b59b6',
+        ]
+        created = 0
+        for i, estate in enumerate(RealEstate.objects.order_by('pk'), start=1):
+            if self._file_missing(estate.photo):
+                estate.photo.save(
+                    f'estate_{i}.png',
+                    make_image(estate.code, colors[i % len(colors)]),
+                    save=True,
+                )
+                created += 1
+        for i, emp in enumerate(Employee.objects.select_related('user').order_by('pk'), start=1):
+            if self._file_missing(emp.photo):
+                emp.photo.save(
+                    f'employee_{i}.png',
+                    make_image(emp.user.username, '#3498db'),
+                    save=True,
+                )
+                created += 1
+        for i, article in enumerate(Article.objects.order_by('pk'), start=1):
+            if self._file_missing(article.image):
+                article.image.save(
+                    f'article_{i}.png',
+                    make_image(article.title[:20], '#e74c3c'),
+                    save=True,
+                )
+                created += 1
+        return created
 
     def _flush_data(self):
         models_order = [

@@ -1,7 +1,8 @@
 """Signals: user profile, groups, employee role sync."""
 
 from django.contrib.auth.models import Group, User
-from django.db.models.signals import post_save
+from django.db import connection
+from django.db.models.signals import post_migrate, post_save
 from django.dispatch import receiver
 
 from .models import Employee, UserProfile
@@ -11,9 +12,19 @@ GROUP_EMPLOYEES = 'Employees'
 
 
 def ensure_role_groups():
-    """Create Clients and Employees groups on app startup."""
+    """Create Clients and Employees groups (after auth tables exist)."""
+    if 'auth_group' not in connection.introspection.table_names():
+        return
     Group.objects.get_or_create(name=GROUP_CLIENTS)
     Group.objects.get_or_create(name=GROUP_EMPLOYEES)
+
+
+@receiver(post_migrate)
+def setup_role_groups_after_migrate(sender, **kwargs):
+    """Run after migrations so migrate/entrypoint does not hit missing tables."""
+    if sender.name != 'agency':
+        return
+    ensure_role_groups()
 
 
 @receiver(post_save, sender=User)

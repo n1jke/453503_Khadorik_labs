@@ -1,4 +1,4 @@
-# Optional Render Blueprint (New > Blueprint)
+# Blueprint для Render (опционально: New → Blueprint)
 services:
   - type: web
     name: real-estate-agency

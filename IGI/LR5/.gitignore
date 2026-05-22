@@ -18,9 +18,10 @@ logs/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-media/
-static/
+# collectstatic output (generated on deploy)
 staticfiles/
+# matplotlib charts only (regenerated on statistics page)
+media/charts/
 
 # Environment variables (Sensitive data)
 .env

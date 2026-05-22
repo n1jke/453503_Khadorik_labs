@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -21,6 +22,10 @@ try:
     load_dotenv(BASE_DIR / '.env')
 except ImportError:
     pass
+
+# pytest uses in-memory/SQLite test DB, not .env DATABASE_URL
+if 'pytest' in sys.modules:
+    os.environ.pop('DATABASE_URL', None)
 
 
 # Quick-start development settings - unsuitable for production

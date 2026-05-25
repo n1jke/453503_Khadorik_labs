@@ -9,22 +9,42 @@ env/
 .env/
 ENV/
 *.venv/
+.virtualenv
 
-# Logs
-logs/
-*.log
+# pip, Pipenv, Poetry cache
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ==============================================================================
+# Django & Sensitive Data
+# ==============================================================================
+
+# Environment variables (Sensitive: secrets, API keys, DB credentials)
+.env
+.env.local
+.env.*.local
 
 # Django specific
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-# collectstatic output (generated on deploy)
+
+# Static files (collected on deploy)
 staticfiles/
-# matplotlib charts only (regenerated on statistics page)
+staticfiles_cdn/
+
+# User-generated matplotlib charts (regenerated on each statistics page load)
 media/charts/
 
-# Environment variables (Sensitive data)
-.env
+# ==============================================================================
+# Logs & Debugging
+# ==============================================================================
+
+logs/
+*.log
+*.log.*
 
 # Unit test / coverage reports
 htmlcov/
@@ -39,10 +59,55 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+.pytest_cache
+.coverage.json
 
-# IDEs (Optional but recommended)
+# ==============================================================================
+# IDEs & Editors
+# ==============================================================================
+
+# VSCode
 .vscode/
+*.code-workspace
+
+# PyCharm
 .idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim / Emacs
 *.swp
 *.swo
-temp/   
+*~
+.#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ==============================================================================
+# OS & Temporary Files
+# ==============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Temporary directories
+temp/
+tmp/
+*.tmp
+
+# ==============================================================================
+# Docker
+# ==============================================================================
+
+# Docker volumes (if using docker-compose)
+postgres_data/
+db_data/   

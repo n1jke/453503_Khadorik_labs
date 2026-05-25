@@ -119,3 +119,4 @@ def geocode_address(address):
     except (requests.RequestException, KeyError, TypeError) as exc:
         logger.error('Nominatim error: %s', exc)
         return None
+

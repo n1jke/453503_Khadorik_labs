@@ -124,7 +124,7 @@ erDiagram
 ## Типы связей
 
 | Связь | Тип | Описание |
-|-------|-----|----------|
+| ------- | ----- | ---------- |
 | User <-> Employee | OneToOne | Профиль сотрудника |
 | PropertyType -> RealEstate | ForeignKey | Основной тип объекта |
 | PropertyType <-> RealEstate | ManyToMany | Дополнительные типы |
